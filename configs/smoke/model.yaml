@@ -33,3 +33,4 @@ guard:
 log:
   console_interval: 2
   heartbeat_interval_sec: 5
+  wandb_tags: [smoke]            # W&B group becomes e.g. trunk_smoke; --set log.wandb=false to skip W&B

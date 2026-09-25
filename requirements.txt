@@ -3,7 +3,8 @@ torch>=2.4            # SDPA with scale=, fused AdamW, non-reentrant checkpointi
 numpy>=1.24
 pyarrow>=14           # packed parquet data (data_prep.loader needs only numpy + pyarrow)
 pyyaml>=6.0
-# analysis / logging (optional)
+# logging / analysis
+wandb>=0.17           # live dashboards; authenticate with `wandb login` (never put the key in a config)
 pandas>=2.0
 matplotlib>=3.7
 tensorboard>=2.14

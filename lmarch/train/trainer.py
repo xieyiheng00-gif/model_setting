@@ -95,10 +95,15 @@ class Trainer:
             torch.backends.cuda.matmul.allow_tf32 = cfg.train.tf32
             torch.backends.cudnn.allow_tf32 = cfg.train.tf32
         wandb_cfg = None
-        if cfg.log.wandb:
-            wandb_cfg = {"project": cfg.log.wandb_project, "name": cfg.log.run_name, "id": cfg.log.run_name,
-                         "config": cfg.to_dict()}
+        if cfg.log.wandb and d.is_main:
+            tags = [cfg.model.arch, stage_tag(cfg), cfg.hardware or "run", cfg.model.pattern()]
+            tags += [str(t) for t in cfg.log.wandb_tags]
+            wandb_cfg = {"lcfg": cfg.log, "run_name": cfg.log.run_name, "config": cfg.to_dict(), "tags": tags,
+                         "group": cfg.log.wandb_group, "job_type": stage_tag(cfg)}
         self.log = RunLogger(self.run_dir, d.rank, cfg.log.tensorboard, wandb_cfg)
+        if self.log.wandb is not None:
+            self.log.event("wandb", mode=self.log.wandb.status, url=getattr(self.log.wandb.run, "url", None),
+                           group=cfg.log.wandb_group)
 
         # ---- data -----------------------------------------------------------------------
         T = cfg.train.seq_len
@@ -262,6 +267,11 @@ class Trainer:
         }
         _write_json_atomic(self.run_dir / "meta.json", meta)
         save_config(self.cfg, self.run_dir / "config.yaml")
+        if self.log.wandb is not None:
+            self.log.wandb.update_config({"meta": {k: meta[k] for k in (
+                "params", "runtime", "world_size", "grad_accum", "rows_per_step", "tokens_per_step",
+                "stage_start_step", "env")}})
+            self.log.wandb.save_files([self.run_dir / "meta.json", self.run_dir / "config.yaml"], self.run_dir)
         p = meta["params"]
         print(f"[lmarch] {cfg.model.arch} {stage_tag(cfg)} pattern={self.raw.pattern} params={p['total'] / 1e6:.1f}M "
               f"(non-emb {p['non_embedding'] / 1e6:.1f}M) world={self.d.world_size} rows/step={self.rows_per_step}"
@@ -318,7 +328,7 @@ class Trainer:
                                 "micro_batch_size": self.cfg.train.micro_batch_size, "time": time.time()})
             self.log.event("exit", code=code, reason=reason, step=self.state.step)
             self.log.sync()
-            self.log.close()
+            self.log.close(code)
         return code
 
     def train(self) -> None:

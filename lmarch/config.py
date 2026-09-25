@@ -224,8 +224,14 @@ class LogConfig:
     run_name: str = ""
     console_interval: int = 10
     tensorboard: bool = False
-    wandb: bool = False
+    wandb: bool = False             # mirror metrics to Weights & Biases (rank 0); key via `wandb login`, never here
     wandb_project: str = "lmarch"
+    wandb_entity: str = ""          # W&B user or team; "" = your default entity
+    wandb_group: str = "{stage}_{hardware}"   # runs compared together; {arch} {stage} {hardware} substituted
+    wandb_tags: list = field(default_factory=list)   # extra tags (arch, stage, hardware are always added)
+    wandb_mode: str = "online"      # online | offline | disabled  (online without a key -> offline)
+    wandb_alerts: bool = True       # W&B alerts on rollback / divergence / OOM / crash / ratio alerts / stage end
+    wandb_log_layers: bool = True   # per-layer panels (layer_<metric>/Lxx_<type>) in addition to per-type ones
     heartbeat_interval_sec: float = 30.0
 
 
@@ -360,6 +366,8 @@ def build_config(config_path: str | None = None, arch: str | None = None,
         cfg.log.run_name = f"{cfg.model.arch}_{stage_tag(cfg)}_{cfg.hardware or 'run'}"
     cfg.checkpoint.init_from = cfg.checkpoint.init_from.format(arch=cfg.model.arch, hardware=cfg.hardware,
                                                                out_dir=cfg.log.out_dir)
+    cfg.log.wandb_group = cfg.log.wandb_group.format(arch=cfg.model.arch, hardware=cfg.hardware or "run",
+                                                     stage=stage_tag(cfg))
     validate(cfg)
     return cfg
 
@@ -391,6 +399,8 @@ def validate(cfg: Config) -> None:
         raise ConfigError("n_heads must be divisible by csa.kv_heads")
     if m.kda.backend not in ("auto", "fla", "torch"):
         raise ConfigError("model.kda.backend must be auto|fla|torch")
+    if cfg.log.wandb_mode not in ("online", "offline", "disabled"):
+        raise ConfigError("log.wandb_mode must be online|offline|disabled")
     if m.attn_backend not in ("auto", "sdpa", "flash_varlen"):
         raise ConfigError("model.attn_backend must be auto|sdpa|flash_varlen")
     t, dc, ev = cfg.train, cfg.data, cfg.eval

@@ -19,4 +19,4 @@ eval: {interval: 8, rows_per_group: 1, final_full: true, micro_batch_size: 4, ex
 diag: {interval: 4, probe_batch_size: 2}
 checkpoint: {interval: 5, keep_last: 3, milestone_interval: 0}
 guard: {ema_warmup: 5, rollback_skip_extra: 2, healthy_window: 1}
-log: {console_interval: 4, heartbeat_interval_sec: 1}
+log: {console_interval: 4, heartbeat_interval_sec: 1, wandb: false}

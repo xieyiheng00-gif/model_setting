@@ -1,4 +1,5 @@
-"""Run logging: append-only JSONL files (source of truth) + optional TensorBoard / W&B mirrors.
+"""Run logging: append-only JSONL files (source of truth) + optional TensorBoard / W&B mirrors
+(W&B: see wandb_sink.py).
 
 <run>/metrics/train_steps.jsonl   every step
 <run>/metrics/diagnostics.jsonl   every diag.interval steps (nested per-layer + per-type stats)
@@ -67,6 +68,7 @@ class RunLogger:
     """Only rank 0 writes metrics; every rank may write events tagged with its rank."""
 
     def __init__(self, run_dir: Path, rank: int, tensorboard: bool = False, wandb_cfg: dict | None = None):
+        """wandb_cfg (rank 0): kwargs for WandbSink (lcfg, run_name, config, tags, group, job_type)."""
         self.rank = rank
         self.run_dir = run_dir
         self.segment = 0
@@ -85,41 +87,38 @@ class RunLogger:
             except Exception as e:
                 print(f"[logger] tensorboard unavailable: {e}")
         if self.main and wandb_cfg:
-            try:
-                import wandb
-                self.wandb = wandb.init(project=wandb_cfg["project"], name=wandb_cfg["name"],
-                                        config=wandb_cfg.get("config"), resume="allow", id=wandb_cfg["id"],
-                                        dir=str(run_dir))
-            except Exception as e:
-                print(f"[logger] wandb unavailable: {e}")
+            from .wandb_sink import WandbSink
+            self.wandb = WandbSink(run_dir=run_dir, **wandb_cfg)
 
     def _mirror(self, prefix: str, rec: dict, step: int) -> None:
-        if self.tb is None and self.wandb is None:
+        if self.tb is None:
             return
-        flat = flatten(rec, prefix)
-        if self.tb is not None:
-            for k, v in flat.items():
-                self.tb.add_scalar(k, v, step)
-        if self.wandb is not None:
-            self.wandb.log(flat, step=step)
+        for k, v in flatten(rec, prefix).items():
+            self.tb.add_scalar(k, v, step)
 
     def step(self, rec: dict) -> None:
         if self.main:
             rec = dict(rec, segment=self.segment)
             self.steps.write(rec)
             self._mirror("train", {k: v for k, v in rec.items() if k not in ("reasons",)}, rec["step"])
+            if self.wandb is not None:
+                self.wandb.train(rec)
 
     def diag(self, rec: dict) -> None:
         if self.main:
             rec = dict(rec, segment=self.segment)
             self.diags.write(rec)
             self._mirror("diag", {"by_type": rec.get("by_type", {}), "global": rec.get("global", {})}, rec["step"])
+            if self.wandb is not None:
+                self.wandb.diag(rec)
 
     def eval(self, rec: dict) -> None:
         if self.main:
             rec = dict(rec, segment=self.segment)
             self.evals.write(rec)
             self._mirror("eval", rec, rec["step"])
+            if self.wandb is not None:
+                self.wandb.eval(rec)
 
     def event(self, kind: str, echo: bool = True, **data) -> None:
         rec = {"time": time.time(), "kind": kind, "rank": self.rank, "segment": self.segment, **data}
@@ -128,6 +127,8 @@ class RunLogger:
             print(f"[event][rank{self.rank}] {kind} {msg}", flush=True)
         if self.main:
             self.events.write(rec)
+            if self.wandb is not None:
+                self.wandb.event(kind, data)
         else:  # non-main ranks: separate file to avoid interleaved writes
             w = JsonlWriter(self.run_dir / "metrics" / f"events_rank{self.rank}.jsonl")
             w.write(rec)
@@ -140,11 +141,11 @@ class RunLogger:
         if self.tb is not None:
             self.tb.flush()
 
-    def close(self) -> None:
+    def close(self, exit_code: int = 0) -> None:
         for w in (self.events, self.steps, self.diags, self.evals):
             if w is not None:
                 w.close()
         if self.tb is not None:
             self.tb.close()
         if self.wandb is not None:
-            self.wandb.finish()
+            self.wandb.finish(exit_code)
