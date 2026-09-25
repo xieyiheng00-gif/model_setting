@@ -124,4 +124,11 @@ log:
   out_dir: runs
   console_interval: 10
   tensorboard: false
-  wandb: false
+  wandb: true                    # API key: run `wandb login` once per machine (or export WANDB_API_KEY)
+  wandb_project: model_setting
+  wandb_entity: ""               # "" = your default W&B user/team
+  wandb_group: "{stage}_{hardware}"   # e.g. trunk_h100x8: the five archs of one stage side by side
+  wandb_tags: []
+  wandb_mode: online             # online | offline | disabled (no key found -> offline + `wandb sync` later)
+  wandb_alerts: true
+  wandb_log_layers: true

@@ -131,7 +131,8 @@ indexer's dense warm-up restarts at the branch. After that the run's own checkpo
 
 ## What is saved
 
-Metrics go to `runs/<run>/metrics/*.jsonl` (append-only; readers keep the last record per step),
+Metrics go to `runs/<run>/metrics/*.jsonl` (append-only; readers keep the last record per step) and, live,
+to W&B (next section),
 checkpoints to `checkpoints/`, NaN forensics to `crash_reports/`, plus `meta.json`, `config.yaml` and
 `heartbeat.json`.
 
@@ -150,6 +151,44 @@ checkpoints to `checkpoints/`, NaN forensics to `crash_reports/`, plus `meta.jso
   - The probe batch is a fixed mix of holdout rows.
 - **Evals:** holdout loss overall, by group, by in-document position, cross-length, and dense vs
   sparse.
+
+## Live monitoring with Weights & Biases
+
+W&B is on by default (`log.wandb: true`, project `model_setting`). Rank 0 mirrors the JSONL logs, which
+stay the source of truth.
+
+**API key: never put it in a config, a script or the repo.** Authenticate each machine once:
+```bash
+pip install wandb
+wandb login          # paste the key from https://wandb.ai/authorize; stored in ~/.netrc (_netrc on Windows)
+```
+On a cluster, `export WANDB_API_KEY=...` from a secret works instead. With no key, the run logs
+offline to `runs/<run>/wandb/` and prints the `wandb sync` command to upload it later. W&B problems
+(no package, auth, network) switch W&B off with a message; they never stop training.
+
+- **Grouping:**
+  - run name = `<arch>_<stage>_<hw>`;
+  - group = `{stage}_{hardware}` (e.g. `trunk_h100x8`), so the five architectures of a stage sit together;
+  - `job_type` = stage;
+  - tags: arch, stage, hardware and layer pattern, plus `log.wandb_tags`.
+- **Panels:**
+  - `train/*`, `train_source/*`, `train_rowtype/*` every step, including the NaN/Inf flags;
+  - `diag_<type>/*` every 100 steps, per layer type (mean and `.max` over the layers of that type);
+  - `layer_<metric>/Lxx_<type>` per layer (activation RMS, update ratios, grad norm, max logit,
+    recall, forget gate, β, KDA state norm, sink mass);
+  - `eval/*`, `eval_group/*`, `eval_pos/*`, and `eval_full*` for the end-of-stage full holdout;
+  - `events/*` counters (rollbacks, NaN forensics, ratio alerts, resumes, checkpoints).
+  - x-axis: `trainer/step`.
+- **Crashes and rollbacks:** the W&B run ID is stored in `runs/<run>/wandb_run_id.txt`, so supervisor
+  restarts continue the same W&B run. Steps re-run after a rollback are logged again, and
+  `train/segment` increases.
+- **Alerts** (email or Slack, per your W&B settings): rollback, divergence, OOM, crash, persistent
+  update-ratio alerts (at most every 30 min), and stage finished.
+- **Switches:**
+  - `--set log.wandb=false` turns it off;
+  - `log.wandb_mode=offline` suits nodes without internet;
+  - `log.wandb_entity=<team>` logs to a team;
+  - `log.wandb_log_layers=false` reduces the panels.
 
 ## Crash handling
 
