@@ -152,6 +152,51 @@ checkpoints to `checkpoints/`, NaN forensics to `crash_reports/`, plus `meta.jso
 - **Evals:** holdout loss overall, by group, by in-document position, cross-length, and dense vs
   sparse.
 
+## API keys (`secrets.env`)
+
+| key | needed for |
+|---|---|
+| `WANDB_API_KEY` | live W&B dashboards |
+| `HF_TOKEN` | `hf download xie1231/llm-10b-packed` (private dataset) |
+| `GITHUB_TOKEN` | cloning or pushing this private repo from a GPU machine |
+
+The keys live in **`secrets.env`** at the repo root. It is gitignored; `secrets.env.example` is the
+committed template. On a shared machine, point `LMARCH_SECRETS_FILE` at a file in your home directory
+instead. Fill it in with hidden input (nothing is echoed):
+```bash
+python scripts/setup_secrets.py            # or edit secrets.env yourself
+python scripts/setup_secrets.py --verify   # prints only the account each key belongs to
+```
+
+`scripts/train.py` and `scripts/supervise.py` load the file automatically. For other commands, use
+the wrapper:
+```bash
+python scripts/with_secrets.py -- hf download xie1231/llm-10b-packed --repo-type dataset --local-dir /data/llm/packed
+python scripts/with_secrets.py -- wandb sync runs/<run>/wandb/offline-run-*
+python scripts/with_secrets.py -- git push
+```
+
+**Safety, including on remote GPU nodes:**
+- Keys go into process environments only, never onto command lines, so they don't show in `ps` or
+  shell history.
+- On Linux the file is forced to mode 600.
+- Every log line, traceback, W&B alert and wrapped command output is filtered, so a key shows up as
+  `***`.
+- Keys never enter configs, checkpoints or W&B configs.
+- `.claude/settings.json` blocks Claude Code from reading or printing the file. The programs load it;
+  the assistant never sees the values.
+
+**First clone on a new GPU box** (nothing exists there yet):
+```bash
+read -rs GITHUB_TOKEN && export GITHUB_TOKEN        # paste, hidden
+git -c credential.helper= -c credential.helper='!f() { echo username=x-access-token; echo "password=$GITHUB_TOKEN"; }; f' \
+    clone https://github.com/xieyiheng00-gif/model_setting.git
+cd model_setting && python scripts/setup_secrets.py && unset GITHUB_TOKEN
+```
+Or copy your local file over an encrypted channel with `scp secrets.env gpu:~/model_setting/`
+(then `chmod 600`). Prefer separate, narrowly scoped keys per machine: an HF read token, and a GitHub
+fine-grained token limited to this repo. That way you can revoke one without touching the others.
+
 ## Live monitoring with Weights & Biases
 
 W&B is on by default (`log.wandb: true`, project `model_setting`). Rank 0 mirrors the JSONL logs, which

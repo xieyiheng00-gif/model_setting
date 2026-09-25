@@ -29,6 +29,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from lmarch.secrets import load_secrets  # noqa: E402
+
 SEVERITY = {3: 6, 4: 5, 2: 4, 1: 3, 5: 2, 6: 1, 0: 0}   # which rank status wins
 
 
@@ -108,6 +111,7 @@ class Supervisor:
             return 2
         if "--resume" not in cmd:
             cmd += ["--resume", "auto"]
+        load_secrets(verbose=True)          # restarted children inherit the keys (env only, never argv)
         signal.signal(signal.SIGINT, self._on_signal)
         signal.signal(signal.SIGTERM, self._on_signal)
         micro = None
