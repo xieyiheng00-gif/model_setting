@@ -1,0 +1,30 @@
+# RTX 3060: full-size model, 4K branch on the smoke subset (after configs/rtx3060/trunk.yaml).
+inherit: ../stage/s2_4k.yaml
+hardware: rtx3060
+data:
+  packed_dir: data/packed_smoke
+  max_rows_per_step: 2       # 2 of the 32 16K rows (long/short mix kept) = 8 x 4K rows
+train:
+  micro_batch_size: 1
+  max_steps: 50
+  activation_checkpointing: true
+schedule:
+  warmup_steps: 5
+  decay_start: 30
+eval:
+  interval: 10
+  rows_per_group: 1
+  final_full: false
+  micro_batch_size: 1
+  extra_seq_lens: []
+diag:
+  interval: 10
+  probe_batch_size: 2
+checkpoint:
+  interval: 10
+  keep_last: 2
+  milestone_interval: 0
+guard:
+  ema_warmup: 10
+log:
+  console_interval: 1

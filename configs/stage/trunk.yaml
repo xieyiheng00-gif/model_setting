@@ -1,0 +1,15 @@
+# Stage 1: trunk_4k, 4K context, 128 rows x 4096 = 524,288 tokens/step, 13,351 steps (7.0B tokens).
+# LR: warmup then constant to the end (no decay) -> the final checkpoint step_0013351_final is the branch point.
+inherit: ../base.yaml
+data:
+  stage: trunk
+  trunk_rows_per_step: 128
+train:
+  seq_len: 4096
+  max_steps: 13351
+schedule:
+  warmup_steps: 250
+  decay_start: -1
+  decay_frac: 0.0
+eval:
+  extra_seq_lens: []

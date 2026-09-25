@@ -1,0 +1,10 @@
+# h100x8, stage 1. 8 GPUs: accum 4 (trunk/4k), 4 (16k)
+# torchrun --standalone --nproc_per_node 8 scripts/train.py --config configs/h100x8/trunk.yaml --arch dense
+inherit: ../stage/trunk.yaml
+hardware: h100x8
+data:
+  packed_dir: /data/llm/packed
+train:
+  micro_batch_size: 4
+log:
+  tensorboard: true

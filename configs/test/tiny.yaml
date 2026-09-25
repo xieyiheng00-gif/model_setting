@@ -1,0 +1,22 @@
+# Tiny model + synthetic packed data (vocab 512) for the pytest suite; packed_dir is set by the tests.
+hardware: test
+model:
+  vocab_size: 512
+  d_model: 64
+  n_heads: 2
+  head_dim: 32
+  ffn_dim: 128
+  dsa: {top_k: 32, index_heads: 2, index_dim: 16, index_rope_dim: 8}
+  csa: {kv_heads: 1, top_k: 8, window: 16, rope_dim: 16, index_heads: 2, index_dim: 16, index_rope_dim: 8}
+  kda: {gate_rank: 16, chunk_size: 16, backend: torch}
+  indexer: {dense_warmup_steps: 4}
+train:
+  dtype: fp32
+  loss_chunk_tokens: 1024
+schedule:
+  warmup_steps: 2
+eval: {interval: 8, rows_per_group: 1, final_full: true, micro_batch_size: 4, extra_seq_lens: []}
+diag: {interval: 4, probe_batch_size: 2}
+checkpoint: {interval: 5, keep_last: 3, milestone_interval: 0}
+guard: {ema_warmup: 5, rollback_skip_extra: 2, healthy_window: 1}
+log: {console_interval: 4, heartbeat_interval_sec: 1}

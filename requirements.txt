@@ -1,0 +1,16 @@
+# core (RTX 3060 on Windows/Linux, H100 on Linux)
+torch>=2.4            # SDPA with scale=, fused AdamW, non-reentrant checkpointing
+numpy>=1.24
+pyarrow>=14           # packed parquet data (data_prep.loader needs only numpy + pyarrow)
+pyyaml>=6.0
+# analysis / logging (optional)
+pandas>=2.0
+matplotlib>=3.7
+tensorboard>=2.14
+# tests
+pytest>=7.4
+# H100 / Linux only (optional, auto-detected; KDA kernels are numerically self-checked at start-up):
+#   pip install flash-linear-attention   # fla: KDA Triton kernels (varlen)
+#   pip install flash-attn               # flash_attn_varlen_func: document-masked full attention
+# The data reader imports data_prep.loader from the llm_training repo (../llm_training, or set
+# data.data_prep_root / $LMARCH_DATA_PREP).

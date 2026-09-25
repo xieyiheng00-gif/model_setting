@@ -1,0 +1,4 @@
+inherit: [../stage/s2_4k.yaml, tiny.yaml]
+data: {max_rows_per_step: 1}       # the same row, re-cut to 64 x 256
+train: {seq_len: 256, micro_batch_size: 16, max_steps: 24}
+schedule: {decay_start: 16}

@@ -1,0 +1,33 @@
+# RTX 3060 12GB: the FULL-SIZE model on the smoke data subset (memory / speed check, 30 steps).
+#   python scripts/make_smoke_data.py        (once)
+#   python scripts/train.py --config configs/rtx3060/trunk.yaml --arch kda_dsa
+inherit: ../stage/trunk.yaml
+hardware: rtx3060
+data:
+  packed_dir: data/packed_smoke
+  trunk_rows_per_step: 8     # 8 x 4096 = 32K tokens/step
+train:
+  micro_batch_size: 1
+  max_steps: 30
+  activation_checkpointing: true
+schedule:
+  warmup_steps: 5
+model:
+  indexer:
+    dense_warmup_steps: 10
+eval:
+  interval: 15
+  rows_per_group: 1
+  final_full: false
+  micro_batch_size: 1
+diag:
+  interval: 10
+  probe_batch_size: 2
+checkpoint:
+  interval: 10
+  keep_last: 2
+  milestone_interval: 0
+guard:
+  ema_warmup: 10
+log:
+  console_interval: 1

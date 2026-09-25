@@ -1,0 +1,15 @@
+# Stage 2, 4K branch: the same stage-2 batches re-cut into 128 x 4096 rows/step, 5,419 steps.
+inherit: ../base.yaml
+data:
+  stage: stage2
+  stage2_view: 4k
+train:
+  seq_len: 4096
+  max_steps: 18770
+schedule:
+  warmup_steps: 250
+  decay_start: 13351
+checkpoint:
+  init_from: "{out_dir}/{arch}_trunk_{hardware}"
+eval:
+  extra_seq_lens: [16384]    # length extrapolation, comparable with the 16K branch

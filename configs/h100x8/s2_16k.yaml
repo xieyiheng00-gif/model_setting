@@ -1,0 +1,11 @@
+# h100x8, stage 2 16K branch (run after configs/h100x8/trunk.yaml). 1 row of 16K per micro-step + activation checkpointing.
+inherit: ../stage/s2_16k.yaml
+hardware: h100x8
+data:
+  packed_dir: /data/llm/packed
+train:
+  micro_batch_size: 1
+eval:
+  micro_batch_size: 1
+log:
+  tensorboard: true

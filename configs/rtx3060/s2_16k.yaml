@@ -1,0 +1,29 @@
+# RTX 3060: full-size model at 16K on the smoke subset. dense/kda fit; DSA/CSA build (T x T) masks at 16K and
+# may not fit in 12 GB (they are meant for the H100).
+inherit: ../stage/s2_16k.yaml
+hardware: rtx3060
+data:
+  packed_dir: data/packed_smoke
+  max_rows_per_step: 1
+train:
+  micro_batch_size: 1
+  max_steps: 40
+schedule:
+  warmup_steps: 5
+  decay_start: 30
+eval:
+  interval: 10
+  rows_per_group: 1
+  final_full: false
+  micro_batch_size: 1
+  extra_seq_lens: []
+diag:
+  interval: 10
+checkpoint:
+  interval: 10
+  keep_last: 2
+  milestone_interval: 0
+guard:
+  ema_warmup: 10
+log:
+  console_interval: 1

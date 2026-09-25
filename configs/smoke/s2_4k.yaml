@@ -1,0 +1,9 @@
+# Smoke stage 2, 4K branch: the SAME 2 rows per step as the 16K smoke branch, re-cut into 8 x 4096.
+inherit: [../stage/s2_4k.yaml, model.yaml]
+data:
+  max_rows_per_step: 2
+train:
+  micro_batch_size: 2
+  max_steps: 60
+schedule:
+  decay_start: 40

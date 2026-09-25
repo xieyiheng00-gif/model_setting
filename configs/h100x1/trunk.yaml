@@ -1,0 +1,10 @@
+# h100x1, stage 1. 1 GPU: accum 32
+# torchrun --standalone --nproc_per_node 1 scripts/train.py --config configs/h100x1/trunk.yaml --arch dense
+inherit: ../stage/trunk.yaml
+hardware: h100x1
+data:
+  packed_dir: /data/llm/packed
+train:
+  micro_batch_size: 4
+log:
+  tensorboard: true

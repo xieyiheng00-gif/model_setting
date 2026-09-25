@@ -1,0 +1,20 @@
+# Stage 2, 16K branch: stage2 32 x 16384 rows/step, 5,419 steps (2.84B tokens, ~70% long tokens).
+# Starts from the trunk run's final checkpoint (weights, Adam moments, step 13,351, RNG) and decays the LR
+# over its 5,419 steps. Identical tokens and schedule to the 4K branch.
+inherit: ../base.yaml
+data:
+  stage: stage2
+  stage2_view: 16k
+train:
+  seq_len: 16384
+  max_steps: 18770           # 13,351 + 5,419
+  activation_checkpointing: true
+schedule:
+  warmup_steps: 250
+  decay_start: 13351
+checkpoint:
+  init_from: "{out_dir}/{arch}_trunk_{hardware}"
+eval:
+  extra_seq_lens: [4096]     # compare with the 4K branch at 4K
+diag:
+  probe_batch_size: 1

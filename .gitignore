@@ -1,0 +1,8 @@
+# generated / local only (anchored to the repo root: lmarch/data/ is code)
+/data/
+/runs/
+/runs_smoke/
+/reports/
+__pycache__/
+*.pyc
+.pytest_cache/

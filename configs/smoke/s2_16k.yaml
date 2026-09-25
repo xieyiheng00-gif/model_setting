@@ -1,0 +1,11 @@
+# Smoke stage 2, 16K branch: 2 of the 32 stage-2 rows (long/short mix kept) at 16,384 tokens, 20 decay steps.
+inherit: [../stage/s2_16k.yaml, model.yaml]
+data:
+  max_rows_per_step: 2
+train:
+  micro_batch_size: 1
+  max_steps: 60
+schedule:
+  decay_start: 40
+diag:
+  probe_batch_size: 1

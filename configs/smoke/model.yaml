@@ -1,0 +1,35 @@
+# Smoke-test model: the same 12-layer patterns and the real 128K vocab, but d_model 256 so a whole
+# trunk -> branch cycle runs in minutes on the RTX 3060. Used by configs/smoke/*.yaml.
+hardware: smoke
+model:
+  d_model: 256
+  n_heads: 4
+  head_dim: 64
+  ffn_dim: 704
+  dsa: {top_k: 128, index_heads: 2, index_dim: 32, index_rope_dim: 16}
+  csa: {kv_heads: 2, top_k: 32, window: 64, index_heads: 2, index_dim: 32, index_rope_dim: 16}
+  kda: {gate_rank: 32}
+  indexer: {dense_warmup_steps: 10}
+data:
+  packed_dir: data/packed_smoke      # python scripts/make_smoke_data.py
+schedule:
+  warmup_steps: 5
+eval:
+  interval: 20
+  rows_per_group: 2
+  final_full: true                   # the smoke holdout is only 8 rows per group
+  micro_batch_size: 1
+diag:
+  interval: 10
+  probe_batch_size: 2
+checkpoint:
+  interval: 10
+  keep_last: 2
+  milestone_interval: 0
+guard:
+  ema_warmup: 10
+  rollback_skip_extra: 2
+  healthy_window: 1
+log:
+  console_interval: 2
+  heartbeat_interval_sec: 5

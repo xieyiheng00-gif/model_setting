@@ -1,0 +1,127 @@
+# Settings shared by every architecture, stage and machine. Stage files (configs/stage/*.yaml) set the
+# data + schedule; machine files (configs/<hw>/*.yaml) set micro-batch, memory and logging.
+# Only the mixer changes between architectures (--arch dense|dsa|kda_full|kda_dsa|csa).
+
+model:
+  arch: dense
+  vocab_size: 128256         # Llama-3 tokenizer of the packed data (ids 0..128001)
+  d_model: 768
+  n_layers: 12
+  n_heads: 12
+  head_dim: 64
+  ffn_dim: 2048              # SwiGLU hidden width
+  max_seq_len: 4096          # raised automatically to the longest train/eval length
+  rope_theta: 10000.0
+  norm_eps: 1.0e-6
+  qk_norm: false
+  tie_embeddings: true       # ~85M non-embedding + 98.5M tied embedding
+  init_std: 0.02
+  hybrid_softmax_nope: false
+  attn_backend: auto         # flash-attn varlen on H100 if installed, else SDPA with a document mask
+  dsa:
+    top_k: 512               # tokens per query, identical in the 4K and 16K stages
+    index_heads: 4
+    index_dim: 64
+    index_rope_dim: 32
+  csa:
+    compress_ratio: 4
+    kv_heads: 6
+    top_k: 128               # compressed blocks (= 512 tokens of coverage) + the 128-token window
+    window: 128
+    rope_dim: 32
+    attn_sink: true
+    index_heads: 4
+    index_dim: 64
+    index_rope_dim: 32
+  kda:
+    conv_size: 4
+    gate_rank: 64
+    backend: auto            # fla Triton kernel (varlen) on H100 if it passes the self-check, else PyTorch
+    chunk_size: 32
+  indexer:
+    dense_warmup_steps: 500  # V3.2-style dense attention + indexer-KL warm-up, counted from the indexer's creation
+    detach_input: true
+    loss_coef: 1.0
+    kl_max_rows: 0
+    lr_mult: 1.0
+
+train:
+  seq_len: 4096
+  micro_batch_size: 4
+  max_steps: 13351           # absolute; stage-2 files continue the counter to 18770
+  seed: 1337
+  dtype: bf16
+  compile: false
+  activation_checkpointing: false
+  grad_clip: 1.0
+  z_loss_coef: 0.0
+  loss_chunk_tokens: 2048
+  tf32: true
+
+optim:
+  lr: 6.0e-4
+  beta1: 0.9
+  beta2: 0.95
+  eps: 1.0e-8
+  weight_decay: 0.1
+
+schedule:                    # WSD over the whole plan: warmup + constant through stage 1 (13,351 steps,
+  warmup_steps: 250          # 71%), decay in each stage-2 branch (5,419 steps, 29%)
+  decay_frac: 0.0
+  decay_start: -1
+  decay_shape: 1-sqrt
+  min_lr_ratio: 0.0
+
+data:
+  packed_dir: D:/data/llm/packed   # Linux/H100: /data/llm/packed (hf download xie1231/llm-10b-packed)
+  data_prep_root: ""               # folder that contains data_prep/ ("" = ../llm_training or $LMARCH_DATA_PREP)
+  stage: trunk
+  stage2_view: 16k
+  trunk_rows_per_step: 128
+  stage_start_step: -1
+  doc_mask: true
+  max_rows_per_step: 0
+  check_token_ids: true
+  prefetch: 2
+
+eval:
+  interval: 500
+  rows_per_group: 16         # 7 groups x 16 rows x 16K = 1.8M tokens per periodic eval
+  final_full: true           # full 35M-token holdout at the end of every stage
+  extra_seq_lens: []
+  micro_batch_size: 0
+  position_buckets: [64, 256, 1024, 4096, 8192]
+  dense_compare: true
+
+diag:
+  interval: 100
+  probe_batch_size: 4
+  ratio_high: 1.0e-2
+  ratio_low: 1.0e-4
+  ratio_persist: 3
+
+checkpoint:
+  interval: 500
+  keep_last: 3
+  milestone_interval: 2500
+  resume: auto
+  init_from: ""
+
+guard:
+  max_consecutive_bad: 3
+  max_bad_in_window: 8
+  bad_window: 100
+  ema_warmup: 100
+  spike_zscore: 6.0
+  spike_ratio: 1.15
+  spike_window: 50
+  spike_rollback_count: 5
+  rollback_skip_extra: 20
+  lr_scale_on_rollback: 1.0
+  max_rollbacks: 5
+
+log:
+  out_dir: runs
+  console_interval: 10
+  tensorboard: false
+  wandb: false

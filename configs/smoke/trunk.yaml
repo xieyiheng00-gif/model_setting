@@ -1,0 +1,7 @@
+# Smoke stage 1: 4 trunk rows x 4096 per step, 40 steps.   python scripts/smoke.py   (or --arch X)
+inherit: [../stage/trunk.yaml, model.yaml]
+data:
+  trunk_rows_per_step: 4
+train:
+  micro_batch_size: 2
+  max_steps: 40

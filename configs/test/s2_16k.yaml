@@ -1,0 +1,5 @@
+inherit: [../stage/s2_16k.yaml, tiny.yaml]
+data: {max_rows_per_step: 1}       # 1 x 16384 re-cut to 16 x 1024
+train: {seq_len: 1024, micro_batch_size: 8, max_steps: 24, activation_checkpointing: true}
+schedule: {decay_start: 16}
+diag: {probe_batch_size: 1}
