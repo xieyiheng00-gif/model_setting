@@ -109,6 +109,15 @@ class LM(nn.Module):
             for m in attn:
                 m.use_flash_varlen = use
             info["attn_backend"] = "flash_varlen" if use else ("sdpa_mask" if doc_mask else "sdpa_causal")
+            if doc_mask and not use and device.type == "cuda":
+                # the H100 smoke test ran here: dense 4K reached 12.7% MFU (SDPA reads a (B,T,T) mask and
+                # cannot skip cross-document blocks)
+                why = ("attn_backend=sdpa requested" if want == "sdpa" else
+                       "flash-attn is not installed" if flash_varlen_fn() is None else "not running in bf16")
+                info["attn_backend_reason"] = why
+                print(f"[lmarch] WARNING: document-masked attention falls back to SDPA with a (B,T,T) mask ({why}); "
+                      "F layers are slow on this path (H100 speed test: dense 4K at 12.7% MFU). "
+                      "Install flash-attn for real runs (README: 'GPU kernels').", flush=True)
         return info
 
     # ---- forward ------------------------------------------------------------------------

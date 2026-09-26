@@ -101,14 +101,16 @@ class WandbSink:
         self.run_name = run_name
         self.counts: dict = {}
         self.last_step = 0
-        self.status = "disabled"
+        self.status = "disabled"            # disabled | online | offline | failed
+        self.error: str | None = None
         mode = lcfg.wandb_mode
         if mode == "disabled":
             return
         try:
             import wandb
         except ImportError:
-            print("[wandb] package not installed (pip install wandb): W&B logging disabled", flush=True)
+            self.status, self.error = "failed", "wandb package not installed (pip install wandb)"
+            print(f"[wandb] WARNING: {self.error}: W&B logging is OFF for this run", flush=True)
             return
         if mode == "online" and not has_api_key():
             print("[wandb] no API key on this machine (run `wandb login` or set WANDB_API_KEY): logging OFFLINE "
@@ -141,7 +143,10 @@ class WandbSink:
             url = getattr(self.run, "url", None)
             print(f"[wandb] {mode}: {url or run_dir / 'wandb'}", flush=True)
         except Exception as e:  # noqa: BLE001 - never block training on W&B
-            print(f"[wandb] init failed ({type(e).__name__}: {e}): W&B logging disabled", flush=True)
+            # recorded as a `wandb` event with status=failed (it used to be one easily-missed console line)
+            self.status, self.error = "failed", f"init failed: {type(e).__name__}: {e}"
+            print(f"[wandb] WARNING: {self.error}: W&B logging is OFF for this run "
+                  f"(training continues; metrics are still written to {run_dir / 'metrics'})", flush=True)
             self.run = None
 
     # ---- helpers ------------------------------------------------------------------------
@@ -156,6 +161,7 @@ class WandbSink:
             self._disable(e)
 
     def _disable(self, e: Exception) -> None:
+        self.status, self.error = "failed", f"logging failed: {type(e).__name__}: {e}"
         print(f"[wandb] logging failed ({type(e).__name__}: {e}): W&B disabled for the rest of the run", flush=True)
         try:
             self.run.finish(exit_code=1)

@@ -1,7 +1,8 @@
 """Diagnostics collected every `diag.interval` steps and their aggregation by layer type.
 
 Per layer (and per parameter group: mixer / indexer / ffn / norm):
-  grad norm, weight norm, update/weight ratio ||dW||/||W|| (+ health label), activation RMS at the
+  grad norm (before clipping), weight norm, update/weight ratio ||dW||/||W|| of the weight matrices
+  (+ health label; 1-D parameters separately as vec_ratio), activation RMS at the
   block output (+ mixer/FFN branch RMS, abs-max), and the mixer-specific statistics:
     softmax/DSA/CSA: max pre-softmax logit and entropy per head
     DSA/CSA:         indexer KL, attention-mass recall, effective sparsity, density (+ sink / window mass for CSA)
@@ -47,25 +48,39 @@ class ParamIndex:
 
     @torch.no_grad()
     def update_stats(self, snap: list[torch.Tensor]) -> dict:
-        """-> {(layer, group): {"ratio", "w_norm", "max_matrix_ratio", "max_matrix"}} (matrices only for max)."""
+        """-> {(layer, group): {"ratio", "w_norm", "vec_ratio", "max_matrix_ratio", "max_matrix"}}.
+
+        ratio: ||dW||/||W|| over the weight MATRICES of the group (the quantity the ~1e-3 rule of thumb is
+        about). 1-D parameters (norm gains, biases, KDA A_log/dt_bias, CSA positional biases/sink) have large
+        norms of their own (e.g. dt_bias ~ -4.6 per channel) and would swamp it; they are reported separately
+        as vec_ratio. A group without matrices (norm) falls back to its vectors.
+        w_norm: norm of ALL parameters of the group."""
         cur = [p.detach() for _, p, _, _ in self.entries]
         deltas = torch._foreach_sub(cur, snap)
         d_n = torch.stack([n.float() for n in torch._foreach_norm(deltas)]).cpu().tolist()
         w_n = torch.stack([n.float() for n in torch._foreach_norm(snap)]).cpu().tolist()
-        agg: dict = defaultdict(lambda: {"d2": 0.0, "w2": 0.0, "max_matrix_ratio": 0.0, "max_matrix": ""})
+        agg: dict = defaultdict(lambda: {"md2": 0.0, "mw2": 0.0, "vd2": 0.0, "vw2": 0.0,
+                                         "max_matrix_ratio": 0.0, "max_matrix": ""})
         for (name, p, k, g), dn, wn in zip(self.entries, d_n, w_n):
             a = agg[(k, g)]
-            a["d2"] += dn * dn
-            a["w2"] += wn * wn
-            if p.ndim >= 2 and wn > 0:
-                r = dn / wn
+            if p.ndim >= 2:
+                a["md2"] += dn * dn
+                a["mw2"] += wn * wn
+                r = dn / wn if wn > 0 else 0.0
                 if r > a["max_matrix_ratio"]:
                     a["max_matrix_ratio"], a["max_matrix"] = r, name
+            else:
+                a["vd2"] += dn * dn
+                a["vw2"] += wn * wn
+        ratio = lambda d2, w2: math.sqrt(d2) / max(math.sqrt(w2), 1e-12)
         out = {}
         for kg, a in agg.items():
-            out[kg] = {"ratio": math.sqrt(a["d2"]) / max(math.sqrt(a["w2"]), 1e-12),
-                       "w_norm": math.sqrt(a["w2"]), "max_matrix_ratio": a["max_matrix_ratio"],
-                       "max_matrix": a["max_matrix"]}
+            has_m = a["mw2"] > 0
+            out[kg] = {"ratio": ratio(a["md2"], a["mw2"]) if has_m else ratio(a["vd2"], a["vw2"]),
+                       "w_norm": math.sqrt(a["mw2"] + a["vw2"]),
+                       "max_matrix_ratio": a["max_matrix_ratio"], "max_matrix": a["max_matrix"]}
+            if has_m and a["vw2"] > 0:
+                out[kg]["vec_ratio"] = ratio(a["vd2"], a["vw2"])
         return out
 
 
@@ -78,18 +93,23 @@ def health(ratio: float, cfg: DiagConfig) -> str:
 
 
 class RatioAlerts:
-    """Fires once a (layer, group) stays high/low for `ratio_persist` consecutive diagnostic checks."""
+    """Fires once a (layer, group) stays high/low for `ratio_persist` consecutive diagnostic checks.
+    Nothing fires before `alert_start_step`: right after warm-up every layer (the embedding most of all)
+    still sits near its N(0, 0.02) init, so Adam steps of ~lr per entry give ratios of ~1e-2 that shrink
+    by themselves as the weights grow. The ratios are logged all the same."""
 
     def __init__(self, cfg: DiagConfig):
         self.cfg = cfg
         self.streak: dict = {}
 
-    def update(self, stats: dict, lr_frac: float) -> list[dict]:
+    def update(self, stats: dict, lr_frac: float, step: int) -> list[dict]:
         alerts = []
         for (layer, grp), s in stats.items():
             if grp not in ("mixer", "indexer", "ffn", "embed"):
                 continue
             h = health(s["ratio"], self.cfg)
+            if step < self.cfg.alert_start_step:
+                h = "ok"   # early training: high ratios are expected (see class docstring)
             if h == "low" and lr_frac < self.cfg.alert_min_lr_frac:
                 h = "ok"   # LR is being annealed to ~0: small updates are expected
             prev_h, n = self.streak.get((layer, grp), ("ok", 0))

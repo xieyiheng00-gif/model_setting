@@ -11,7 +11,10 @@ Every run goes through scripts/supervise.py, exactly like a real run. Checks aft
   * both branches started from the trunk's final checkpoint at the same step (branch_init event);
   * both branches consumed the same stage-2 batches in the same order;
   * the LR decayed to ~0 at the end of each branch; no NaN/Inf steps (unless --faults);
-  * per-type diagnostics exist for every layer type of the architecture.
+  * per-type diagnostics exist for every layer type of the architecture;
+  * W&B did not fail to start (unless --set log.wandb=false).
+Notes (printed, not failures): a CUDA run with document masking that fell back to SDPA with a mask
+(flash-attn not installed: slow F layers) or to the PyTorch KDA kernel (fla missing / self-check failed).
 With --faults the first arch's trunk also gets poisoned batches (NaN -> skip -> rollback) and one
 injected crash (exception -> supervisor restart -> exact resume).
 Uses the model/data sizes of <config_dir>/{trunk,s2_16k,s2_4k}.yaml (default configs/smoke).
@@ -64,9 +67,28 @@ def run_stage(cfg: Path, arch: str, out_dir: Path, hw: str, stage: str, extra: l
     return rc, run_dir
 
 
+def notes_for(runs: dict) -> list[str]:
+    """Kernel fallbacks that make a real run slow (not failures: expected on CPU / Windows / RTX 3060)."""
+    out = set()
+    for stage, (rc, rd) in runs.items():
+        try:
+            meta = json.loads((rd / "meta.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        rt, cuda = meta.get("runtime", {}), meta.get("env", {}).get("device", "cpu") != "cpu"
+        if cuda and rt.get("attn_backend") == "sdpa_mask":
+            out.add("F/S attention ran on SDPA with a (B,T,T) mask: install flash-attn for real runs (README)")
+        if cuda and rt.get("kda_backend") == "torch":
+            out.add(f"KDA ran on the PyTorch kernel: {rt.get('kda_backend_reason', '')}")
+    return sorted(out)
+
+
 def check(arch: str, runs: dict, faults: bool) -> list[str]:
     errs = []
     for stage, (rc, rd) in runs.items():
+        wb = [e for e in read_jsonl(rd / "metrics" / "events.jsonl") if e.get("kind") == "wandb"]
+        if wb and wb[-1].get("mode") == "failed":
+            errs.append(f"{stage}: W&B failed to start ({wb[-1].get('error')})")
         if rc != 0:
             errs.append(f"{stage}: exit code {rc}")
             continue
@@ -119,7 +141,7 @@ def main() -> int:
         return 2
     if out.exists() and not a.keep:
         shutil.rmtree(out)
-    results, failures = {}, {}
+    results, failures, notes = {}, {}, {}
     for i, arch in enumerate(a.archs):
         runs = {}
         for stage in a.stages:
@@ -138,6 +160,7 @@ def main() -> int:
                 if k not in kinds:
                     errs.append(f"--faults: expected a '{k}' event in the trunk run")
         failures[arch] = errs
+        notes[arch] = notes_for(runs)
     print("\n================ smoke summary ================")
     for arch, runs in results.items():
         status = "OK " if not failures[arch] else "FAIL"
@@ -145,6 +168,8 @@ def main() -> int:
         print(f"{status} {arch:9s} {codes}")
         for e in failures[arch]:
             print(f"      - {e}")
+        for n in notes[arch]:
+            print(f"      note: {n}")
     run_dirs = [str(rd) for runs in results.values() for _, rd in runs.values() if (rd / "metrics").exists()]
     if run_dirs:
         subprocess.call([sys.executable, str(ROOT / "scripts" / "analyze_runs.py"), *run_dirs,

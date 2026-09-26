@@ -20,7 +20,7 @@ Exact counts are printed at start-up and written to `runs/<run>/meta.json`.
 ## Quick start
 
 ```bash
-pip install -r requirements.txt       # H100/Linux: + flash-linear-attention, flash-attn (optional)
+pip install -r requirements.txt       # H100/Linux: + flash-linear-attention and flash-attn (see "GPU kernels")
 # the data (TRAINING_DATA.md §1) and its reader: this repo imports llm_training/data_prep.loader
 hf download xie1231/llm-10b-packed --repo-type dataset --local-dir /data/llm/packed
 #   keep llm_training/ next to this repo, or set data.data_prep_root / $LMARCH_DATA_PREP
@@ -129,6 +129,29 @@ indexer's dense warm-up restarts at the branch. After that the run's own checkpo
 > 16K they build (T × T) masks. Compare their quality metrics; don't read their tokens/sec and memory
 > as architectural numbers.
 
+### GPU kernels (H100)
+
+Two optional packages decide the speed of a real run. Both are picked up automatically, and the
+start-up line (and `meta.json` → `runtime`) says which path each run uses:
+
+| package | used for | without it |
+|---|---|---|
+| `flash-attn` | F layers and the DSA dense warm-up with document masking (`attn_backend: flash_varlen`) | SDPA with a (B,T,T) mask (`sdpa_mask`): a start-up WARNING, and a note in the smoke summary |
+| `flash-linear-attention` (fla) | KDA (`kda_backend: fla`, numerically self-checked at start-up) | the PyTorch chunked kernel |
+
+The 2026-09-26 H100 speed test ran on `sdpa_mask` and got 12.7% MFU for dense 4K
+(`results/h100_smoke_2026-09-26`). flash-attn had no prebuilt wheel for torch 2.12 + CUDA 13, and
+building it took ~25 min:
+
+```bash
+pip install ninja packaging
+MAX_JOBS=10 pip install flash-attn --no-build-isolation   # MAX_JOBS bounds RAM use during the build
+python -c "import flash_attn; print(flash_attn.__version__)"
+```
+
+Install it once per machine or image, and before the real runs. `--set model.attn_backend=flash_varlen`
+makes a run fail at start-up instead of falling back.
+
 ## What is saved
 
 Metrics go to `runs/<run>/metrics/*.jsonl` (append-only; readers keep the last record per step) and, live,
@@ -141,8 +164,13 @@ checkpoints to `checkpoints/`, NaN forensics to `crash_reports/`, plus `meta.jso
   - `loss_by_source`, `loss_by_row_type`, `valid_tokens`, `long_token_frac`, `mean_segment_len`;
   - `data_index`, `data_batch`, `data_epoch`, indexer KL per layer and type.
 - **Every 100 steps**, per layer and **grouped by layer type**:
-  - activation RMS at each block output, per-group grad norms, and update/weight ratios with a health
-    label and alerts;
+  - activation RMS at each block output, per-group grad norms (before clipping), and update/weight
+    ratios with a health label and alerts;
+  - the update/weight ratio `‖ΔW‖/‖W‖` is taken over the weight **matrices** of a group. 1-D
+    parameters (norm gains, KDA `A_log`/`dt_bias`, CSA biases/sink) are reported separately as
+    `vec_ratio`, because their large norms would otherwise dominate the ratio;
+  - ratio alerts start at `diag.alert_start_step` (1000). Right after warm-up the weights are still
+    near their init, and ratios of ~1e-2 (the embedding most of all) are normal;
   - F/S/C: max logit and entropy per head;
   - S/C: indexer KL, attention-mass recall, effective sparsity and density;
   - C: sink/window mass;
@@ -209,7 +237,8 @@ wandb login          # paste the key from https://wandb.ai/authorize; stored in 
 ```
 On a cluster, `export WANDB_API_KEY=...` from a secret works instead. With no key, the run logs
 offline to `runs/<run>/wandb/` and prints the `wandb sync` command to upload it later. W&B problems
-(no package, auth, network) switch W&B off with a message; they never stop training.
+(no package, auth, network, API changes) switch W&B off; they never stop training. The run records
+them as a `wandb` event with `mode: failed` and the error, and `scripts/smoke.py` fails on them.
 
 - **Grouping:**
   - run name = `<arch>_<stage>_<hw>`;
@@ -238,7 +267,9 @@ offline to `runs/<run>/wandb/` and prints the `wandb sync` command to upload it 
 ## Crash handling
 
 The trainer skips non-finite steps and writes a forensics report naming the first non-finite module
-and its layer type. Repeated failures trigger a **rollback** to the last healthy checkpoint of the
+and its layer type. Every loss or grad-norm spike logs a `guard` event with the gradient norms
+(before clipping) per layer type and the five largest per layer. The step record gets `grad_culprit`
+(e.g. `L05.mixer(kda) 83.2`), and the console line shows it. Repeated failures trigger a **rollback** to the last healthy checkpoint of the
 stage. The rollback skips the offending data by raising `data_skip`, so step *s* then reads batch
 *s − start + data_skip*. It escalates to older checkpoints, and after `max_rollbacks` it exits with
 code 4. `scripts/supervise.py` restarts on errors and preemption, halves the micro-batch on OOM, and

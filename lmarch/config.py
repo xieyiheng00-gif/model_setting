@@ -180,6 +180,7 @@ class DiagConfig:
     ratio_high: float = 1e-2        # ||dW||/||W|| persistently above -> LR too high for that layer
     ratio_low: float = 1e-4         # below -> layer is barely learning
     ratio_persist: int = 3          # consecutive diagnostic checks before an alert fires
+    alert_start_step: int = 1000    # no ratio alerts before this step (near-init weights give ~1e-2 ratios)
     alert_min_lr_frac: float = 0.1  # suppress "barely learning" alerts once LR decayed below this fraction
 
 

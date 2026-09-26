@@ -104,7 +104,7 @@ class Trainer:
         self.log = RunLogger(self.run_dir, d.rank, cfg.log.tensorboard, wandb_cfg)
         if self.log.wandb is not None:
             self.log.event("wandb", mode=self.log.wandb.status, url=getattr(self.log.wandb.run, "url", None),
-                           group=cfg.log.wandb_group)
+                           group=cfg.log.wandb_group, error=self.log.wandb.error)
 
         # ---- data -----------------------------------------------------------------------
         T = cfg.train.seq_len
@@ -436,11 +436,14 @@ class Trainer:
 
         grad_stats, snap = None, None
         if diag_step and d.is_main and grad_finite:
-            grad_stats = self.pindex.grad_norms()
+            grad_stats = self._layer_grad_norms(gnorm, clip)
             snap = self.pindex.snapshot()
         if not (loss_finite and grad_finite):
             self._forensics(step, micro_batches, micro_losses, flags)
         verdict = self.guard.check(step, lm_loss, gnorm, loss_finite, grad_finite)
+        spike_detail = {}
+        if verdict.reasons and d.is_main and grad_finite:   # which layers carried the bad gradient
+            spike_detail = self._grad_culprits(grad_stats or self._layer_grad_norms(gnorm, clip))
         applied = verdict.action == "ok"
         if applied:
             self.opt.step()
@@ -487,10 +490,12 @@ class Trainer:
             rec["indexer_kl"] = sum(kl_layers) / len(kl_layers)
             rec["indexer_kl_by_type"] = {t: sum(v) / len(v) for t, v in kl_by_type.items()}
             rec["indexer_kl_by_layer"] = kl_layers
+        if spike_detail:
+            rec["grad_culprit"] = spike_detail["grad_culprit"]
         self.log.step(rec)
         if verdict.reasons:
             self.log.event("guard", step=step, action=verdict.action, reasons=verdict.reasons,
-                           loss=lm_loss, grad_norm=gnorm)
+                           loss=lm_loss, grad_norm=gnorm, **spike_detail)
         if verdict.action == "rollback":
             self._rollback(step, verdict)
             return stop_code
@@ -518,11 +523,37 @@ class Trainer:
             msg += f" | idxKL {r['indexer_kl']:.3f}" + ("" if r["sparse_phase"] else " (dense warm-up)")
         if r["action"] != "ok" or r["reasons"]:
             msg += f" | {r['action'].upper()} {'; '.join(r['reasons'])}"
+        if r.get("grad_culprit"):
+            msg += f" | largest grad {r['grad_culprit']}"
         print(msg, flush=True)
 
     # ==================================================================================
     # diagnostics / eval
     # ==================================================================================
+    def _layer_grad_norms(self, gnorm: float, clip: float) -> dict:
+        """Per-(layer, group) gradient norms BEFORE clipping. clip_grad_norm_ has already scaled every
+        gradient by clip / (gnorm + 1e-6) when gnorm > clip, which would hide the size of a spike."""
+        gs = self.pindex.grad_norms()
+        if gnorm > clip:
+            f = (gnorm + 1e-6) / clip
+            gs = {k: v * f for k, v in gs.items()}
+        return gs
+
+    def _grad_culprits(self, gs: dict, n: int = 5) -> dict:
+        """For guard events: the largest per-(layer, group) gradient norms and the norm per layer type."""
+        if not gs:
+            return {}
+        types = self.pindex.layer_types
+        name = lambda k, g: f"{k}.{g}({types[k]})" if k in types else k
+        top = sorted(gs.items(), key=lambda kv: -kv[1])[:n]
+        by_type: dict = {}
+        for (k, g), v in gs.items():
+            t = f"{types[k]}/{g}" if k in types else k
+            by_type[t] = by_type.get(t, 0.0) + v * v
+        return {"grad_culprit": f"{name(*top[0][0])} {top[0][1]:.3g}",
+                "top_grad_norms": {name(k, g): v for (k, g), v in top},
+                "grad_norm_by_type": {t: math.sqrt(s) for t, s in sorted(by_type.items())}}
+
     @torch.no_grad()
     def _logit_stats(self, hidden: torch.Tensor, chunk: int = 1024) -> dict:
         """max / std / mean logsumexp of the LM logits, computed in chunks (128K vocab)."""
@@ -575,7 +606,7 @@ class Trainer:
                 glob[f"{key}_weight_norm"] = upd_stats[(key, grp)]["w_norm"]
         if upd_stats:
             glob["param_norm_total"] = math.sqrt(sum(v["w_norm"] ** 2 for v in upd_stats.values()))
-        alerts = self.alerts.update(upd_stats, lr_frac) if upd_stats else []
+        alerts = self.alerts.update(upd_stats, lr_frac, step) if upd_stats else []
         for a in alerts:
             self.log.event("ratio_alert", step=step, **a)
         self.log.diag({"step": step, "lr_frac": lr_frac, "sparse_phase": sparse, "global": glob,

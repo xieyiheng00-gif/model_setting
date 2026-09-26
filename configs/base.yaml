@@ -99,6 +99,7 @@ diag:
   ratio_high: 1.0e-2
   ratio_low: 1.0e-4
   ratio_persist: 3
+  alert_start_step: 1000     # ratio alerts only after this step (ratios are logged from step 0)
 
 checkpoint:
   interval: 500

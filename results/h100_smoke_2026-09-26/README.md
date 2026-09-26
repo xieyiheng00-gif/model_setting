@@ -88,6 +88,54 @@ indexer scores per layer, hence 22 s/step.
 4. flash-attn has no prebuilt wheel for torch 2.12 + CUDA 13; building it from source took ~25 min (10 jobs).
    It is now installed on this box, so future dense/kda_full runs here pick `flash_varlen` automatically.
 
+## 5. Follow-up: analysis of these results and fixes (branch `h100-smoke-fixes`)
+
+Status of the issues in §4:
+
+| # | issue | status |
+|---|---|---|
+| 1 | W&B `generate_id` moved in wandb 0.30 | fix d298344 carried onto the current `main`. A failed W&B start is now a `wandb` event with `mode: failed` and the error (it used to be one console line), and `scripts/smoke.py` fails on it |
+| 2 | pushed repo older than the README | resolved: PR #2 (secrets file, deny rules, `setup_secrets.py`, `with_secrets.py`) is merged into `main`; `git pull` on the box |
+| 3 | 42-char W&B key rejected | account side; the code has no key-length check (86-char keys work) |
+| 4 | flash-attn: no wheel, 25-min build | README "GPU kernels" has the build command. Runs on CUDA that fall back to `sdpa_mask` print a WARNING, record `attn_backend_reason` in `meta.json`, and get a note in the smoke summary |
+
+Found while analysing `smoke/runs` (not in §4):
+
+- **The KDA update ratio was misleading.** `diag_update_mixer_ratio.png` shows the KDA mixers at
+  ~3e-4, about 10× below the softmax/DSA/CSA mixers. That reads as "barely learning", but the group ratio
+  ‖ΔW‖/‖W‖ was taken over all parameters. KDA's 1-D `dt_bias` (≈ −4.6 per channel at init) makes up
+  ≈77 of the group's weight norm of 82 at d_model 256, while the matrices themselves moved at up to
+  6.5e-3 (`max_matrix_ratio`, `blocks.0.mixer.o_proj.weight`, step 30). At full size it would understate
+  the ratio by ~3.6×. **Fix:** the ratio now uses weight matrices only; 1-D parameters are reported
+  separately as `vec_ratio`.
+- **The embed "LR too high" alert fired in all 5 trunk runs.** At step 30 the embedding update ratio was
+  1.8e-2. Near init every Adam step is ~lr per entry against N(0, 0.02) weights, and the ratio was
+  already falling (2.4e-2 → 1.25e-2 over steps 10–39) as the weight norm grew (115 → 145). It would fire
+  the same way in the real run. **Fix:** `diag.alert_start_step` (1000; 0 in the smoke configs, so the
+  alert path is still exercised); ratios are logged from step 0.
+- **Grad-norm spikes in stage 2, larger in the KDA models.**
+
+  | run | step | grad norm | note |
+  |---|---|---|---|
+  | kda_full s2_16k / s2_4k | 51 | 96 / 9.9 | loss 10.7 / 11.1 vs dense 9.24 |
+  | kda_dsa s2_16k | 44 | 399 | |
+  | kda_dsa s2_4k | 55–56 | 47, 25 | |
+  | dsa s2_4k | 55 | 12.7 | |
+  | dsa s2_16k | 59 | 11.3 | |
+
+  Both kda_full branches spiked on the same batch (stage-2 batch 11), in its code row: code loss
+  13.8 / 14.5 vs 10.9 for dense, which is worse than a uniform guess (ln 128,256 = 11.76). Many
+  stage-2 code rows are highly repetitive (up to 78% repeated 8-grams in these batches). Clipping
+  absorbed every spike and the loss recovered on the next step, so this looks data-driven at d_model
+  256 after ~50 steps rather than a bug. The layer could not be identified, because per-layer grad
+  norms existed only on diagnostic steps, and those were **after** clipping. **Fix:** every `guard`
+  event now carries per-layer-type and top-5 per-layer grad norms from before clipping. The step record
+  gets `grad_culprit`, and diagnostic grad norms are from before clipping. Watch these in the full-size
+  stage 2.
+- **DSA speed** (4.3 s/step at 4K, 22.5 s/step at 16K) is being handled separately.
+- **Not measured yet:** kda_dsa at 16K, csa at 4K/16K, and every arch with flash-attn (now installed on
+  the box). Rerun `speed/run_speed.sh dense kda_dsa csa` to get these numbers.
+
 ## Files in this folder
 
 | path | contents |
