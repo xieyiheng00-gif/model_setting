@@ -1,0 +1,5 @@
+{"time":1790386026.5869384,"kind":"branch_init","rank":0,"segment":0,"step":30,"stage":"s2_16k","branch_from":"/workspace/h100_smoke/runs_speed/dsa_trunk_h100speed/checkpoints/step_0000030_final","new_params":[],"dropped_params":[],"optimizer_state_copied":134,"optimizer_params":134,"stage_start_step":30,"branch_stage":"trunk","branch_config_arch":"dsa"}
+{"time":1790386026.594048,"kind":"train_begin","rank":0,"segment":0,"start_step":30,"max_steps":50,"data_index":0,"world_size":1,"micro_batch_size":1,"grad_accum":8}
+{"time":1790386481.2375066,"kind":"checkpoint","rank":0,"segment":0,"step":50,"path":"/workspace/h100_smoke/runs_speed/dsa_s2_16k_h100speed/checkpoints/step_0000050_final","healthy":true,"seconds":1.86}
+{"time":1790386481.2454724,"kind":"train_end","rank":0,"segment":0,"step":50,"tokens_seen":6553600,"n_rollbacks":0,"n_skipped":0}
+{"time":1790386481.246669,"kind":"exit","rank":0,"segment":0,"code":0,"reason":"completed","step":50}

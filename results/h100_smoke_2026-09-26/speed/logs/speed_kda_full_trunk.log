@@ -1,0 +1,36 @@
+[event][rank0] start fresh=True stage=trunk
+[lmarch] kda_full trunk pattern=KKKFKKKFKKKF params=185.4M (non-emb 86.9M) world=1 rows/step=32x4096 micro=4 accum=8 steps 0->30 {'kda_backend': 'fla', 'kda_backend_reason': 'varlen self-check ok (rel err 4.27e-03/5.41e-03)', 'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=0 max_steps=30 data_index=0 world_size=1 micro_batch_size=4 grad_accum=8
+step      0/30 | loss 11.9120 | lr 1.20e-04 | gnorm 3.288 | 153.04s | 0.9k tok/s | mem 21.6GB
+step      1/30 | loss 11.6611 | lr 2.40e-04 | gnorm 3.555 | 1.85s | 71.0k tok/s | mem 23.0GB
+step      2/30 | loss 10.8570 | lr 3.60e-04 | gnorm 2.801 | 1.84s | 71.3k tok/s | mem 23.0GB
+step      3/30 | loss 10.7259 | lr 4.80e-04 | gnorm 1.803 | 1.84s | 71.3k tok/s | mem 23.0GB
+step      4/30 | loss 10.3425 | lr 6.00e-04 | gnorm 1.900 | 1.84s | 71.3k tok/s | mem 23.0GB
+step      5/30 | loss 9.8842 | lr 6.00e-04 | gnorm 1.723 | 1.84s | 71.3k tok/s | mem 23.0GB
+step      6/30 | loss 9.4857 | lr 6.00e-04 | gnorm 1.512 | 1.84s | 71.3k tok/s | mem 23.0GB
+step      7/30 | loss 9.1166 | lr 6.00e-04 | gnorm 1.375 | 1.84s | 71.4k tok/s | mem 23.0GB
+step      8/30 | loss 9.2532 | lr 6.00e-04 | gnorm 1.067 | 1.84s | 71.3k tok/s | mem 23.0GB
+step      9/30 | loss 8.7042 | lr 6.00e-04 | gnorm 1.007 | 1.84s | 71.3k tok/s | mem 23.0GB
+step     10/30 | loss 8.5268 | lr 6.00e-04 | gnorm 13.382 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     11/30 | loss 8.1302 | lr 6.00e-04 | gnorm 0.920 | 1.84s | 71.2k tok/s | mem 23.0GB
+step     12/30 | loss 8.1515 | lr 6.00e-04 | gnorm 0.757 | 1.84s | 71.2k tok/s | mem 23.0GB
+step     13/30 | loss 8.6700 | lr 6.00e-04 | gnorm 0.893 | 1.84s | 71.2k tok/s | mem 23.0GB
+step     14/30 | loss 8.6494 | lr 6.00e-04 | gnorm 0.826 | 1.84s | 71.2k tok/s | mem 23.0GB
+step     15/30 | loss 8.3787 | lr 6.00e-04 | gnorm 0.792 | 1.84s | 71.3k tok/s | mem 23.0GB
+step     16/30 | loss 8.4106 | lr 6.00e-04 | gnorm 0.872 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     17/30 | loss 8.1466 | lr 6.00e-04 | gnorm 0.759 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     18/30 | loss 8.0608 | lr 6.00e-04 | gnorm 0.688 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     19/30 | loss 8.3778 | lr 6.00e-04 | gnorm 1.026 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     20/30 | loss 8.4981 | lr 6.00e-04 | gnorm 0.731 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     21/30 | loss 8.1010 | lr 6.00e-04 | gnorm 0.708 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     22/30 | loss 8.2781 | lr 6.00e-04 | gnorm 0.846 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     23/30 | loss 8.2001 | lr 6.00e-04 | gnorm 0.880 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     24/30 | loss 8.3105 | lr 6.00e-04 | gnorm 0.382 | 2.00s | 65.5k tok/s | mem 23.0GB
+step     25/30 | loss 8.2455 | lr 6.00e-04 | gnorm 0.603 | 1.83s | 71.4k tok/s | mem 23.0GB
+step     26/30 | loss 8.2985 | lr 6.00e-04 | gnorm 0.857 | 1.84s | 71.3k tok/s | mem 23.0GB
+step     27/30 | loss 8.3851 | lr 6.00e-04 | gnorm 0.771 | 1.84s | 71.4k tok/s | mem 23.0GB
+step     28/30 | loss 8.2240 | lr 6.00e-04 | gnorm 0.544 | 1.84s | 71.3k tok/s | mem 23.0GB
+step     29/30 | loss 8.3193 | lr 6.00e-04 | gnorm 0.616 | 1.84s | 71.2k tok/s | mem 23.0GB
+[event][rank0] checkpoint step=30 path=/workspace/h100_smoke/runs_speed/kda_full_trunk_h100speed/checkpoints/step_0000030_final healthy=True seconds=1.83
+[event][rank0] train_end step=30 tokens_seen=3932160 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=30

@@ -1,0 +1,5 @@
+{"time":1790385771.2502823,"kind":"start","rank":0,"segment":0,"fresh":true,"stage":"trunk"}
+{"time":1790385771.2569997,"kind":"train_begin","rank":0,"segment":0,"start_step":0,"max_steps":30,"data_index":0,"world_size":1,"micro_batch_size":4,"grad_accum":8}
+{"time":1790385815.5963018,"kind":"checkpoint","rank":0,"segment":0,"step":30,"path":"/workspace/h100_smoke/runs_speed/dense_trunk_h100speed/checkpoints/step_0000030_final","healthy":true,"seconds":1.81}
+{"time":1790385815.606871,"kind":"train_end","rank":0,"segment":0,"step":30,"tokens_seen":3932160,"n_rollbacks":0,"n_skipped":0}
+{"time":1790385815.6121569,"kind":"exit","rank":0,"segment":0,"code":0,"reason":"completed","step":30}

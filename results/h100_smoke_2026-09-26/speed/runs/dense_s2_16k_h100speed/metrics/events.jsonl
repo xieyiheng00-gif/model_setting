@@ -1,0 +1,5 @@
+{"time":1790385822.868338,"kind":"branch_init","rank":0,"segment":0,"step":30,"stage":"s2_16k","branch_from":"/workspace/h100_smoke/runs_speed/dense_trunk_h100speed/checkpoints/step_0000030_final","new_params":[],"dropped_params":[],"optimizer_state_copied":74,"optimizer_params":74,"stage_start_step":30,"branch_stage":"trunk","branch_config_arch":"dense"}
+{"time":1790385822.8753388,"kind":"train_begin","rank":0,"segment":0,"start_step":30,"max_steps":50,"data_index":0,"world_size":1,"micro_batch_size":1,"grad_accum":8}
+{"time":1790385881.3418632,"kind":"checkpoint","rank":0,"segment":0,"step":50,"path":"/workspace/h100_smoke/runs_speed/dense_s2_16k_h100speed/checkpoints/step_0000050_final","healthy":true,"seconds":1.81}
+{"time":1790385881.3524215,"kind":"train_end","rank":0,"segment":0,"step":50,"tokens_seen":6553600,"n_rollbacks":0,"n_skipped":0}
+{"time":1790385881.3535383,"kind":"exit","rank":0,"segment":0,"code":0,"reason":"completed","step":50}

@@ -1,0 +1,26 @@
+[event][rank0] branch_init step=30 stage=s2_16k branch_from=/workspace/h100_smoke/runs_speed/dense_trunk_h100speed/checkpoints/step_0000030_final optimizer_state_copied=74 optimizer_params=74 stage_start_step=30 branch_stage=trunk branch_config_arch=dense
+[lmarch] dense s2_16k pattern=FFFFFFFFFFFF params=183.5M (non-emb 85.0M) world=1 rows/step=8x16384 micro=1 accum=8 steps 30->50 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=30 max_steps=50 data_index=0 world_size=1 micro_batch_size=1 grad_accum=8
+step     30/50 | loss 8.5839 | lr 6.00e-04 | gnorm 0.692 | 3.42s | 38.4k tok/s | mem 7.2GB
+step     31/50 | loss 7.9108 | lr 4.66e-04 | gnorm 1.141 | 2.73s | 48.1k tok/s | mem 7.2GB
+step     32/50 | loss 8.5601 | lr 4.10e-04 | gnorm 0.740 | 2.73s | 48.1k tok/s | mem 7.2GB
+step     33/50 | loss 8.1674 | lr 3.68e-04 | gnorm 1.279 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     34/50 | loss 8.0067 | lr 3.32e-04 | gnorm 0.798 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     35/50 | loss 8.1482 | lr 3.00e-04 | gnorm 0.656 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     36/50 | loss 7.7374 | lr 2.71e-04 | gnorm 0.715 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     37/50 | loss 7.8848 | lr 2.45e-04 | gnorm 0.755 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     38/50 | loss 8.2474 | lr 2.21e-04 | gnorm 0.826 | 2.73s | 48.1k tok/s | mem 7.2GB
+step     39/50 | loss 7.9275 | lr 1.98e-04 | gnorm 1.739 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     40/50 | loss 7.9929 | lr 1.76e-04 | gnorm 0.682 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     41/50 | loss 8.2177 | lr 1.55e-04 | gnorm 0.586 | 2.73s | 48.1k tok/s | mem 7.2GB
+step     42/50 | loss 8.3141 | lr 1.35e-04 | gnorm 0.619 | 2.73s | 48.1k tok/s | mem 7.2GB
+step     43/50 | loss 8.0410 | lr 1.16e-04 | gnorm 0.647 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     44/50 | loss 8.5044 | lr 9.80e-05 | gnorm 1.246 | 2.73s | 48.1k tok/s | mem 7.2GB
+step     45/50 | loss 8.4428 | lr 8.04e-05 | gnorm 1.205 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     46/50 | loss 8.1605 | lr 6.33e-05 | gnorm 0.866 | 2.73s | 48.1k tok/s | mem 7.2GB
+step     47/50 | loss 8.0373 | lr 4.68e-05 | gnorm 0.799 | 2.73s | 48.0k tok/s | mem 7.2GB
+step     48/50 | loss 7.5154 | lr 3.08e-05 | gnorm 0.725 | 2.73s | 48.1k tok/s | mem 7.2GB
+step     49/50 | loss 8.5611 | lr 1.52e-05 | gnorm 0.868 | 2.75s | 47.6k tok/s | mem 7.2GB
+[event][rank0] checkpoint step=50 path=/workspace/h100_smoke/runs_speed/dense_s2_16k_h100speed/checkpoints/step_0000050_final healthy=True seconds=1.81
+[event][rank0] train_end step=50 tokens_seen=6553600 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=50
