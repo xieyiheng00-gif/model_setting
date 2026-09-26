@@ -1,0 +1,18 @@
+[event][rank0] branch_init step=30 stage=s2_16k branch_from=/workspace/h100_smoke/runs_speed/kda_full_trunk_h100speed/checkpoints/step_0000030_final optimizer_state_copied=200 optimizer_params=200 stage_start_step=30 branch_stage=trunk branch_config_arch=kda_full
+[lmarch] kda_full s2_16k pattern=KKKFKKKFKKKF params=185.4M (non-emb 86.9M) world=1 rows/step=8x16384 micro=1 accum=8 steps 30->42 {'kda_backend': 'fla', 'kda_backend_reason': 'varlen self-check ok (rel err 4.27e-03/5.41e-03)', 'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=30 max_steps=42 data_index=0 world_size=1 micro_batch_size=1 grad_accum=8
+step     30/42 | loss 8.7835 | lr 6.00e-04 | gnorm 0.726 | 3.20s | 41.0k tok/s | mem 7.2GB
+step     31/42 | loss 8.0969 | lr 4.27e-04 | gnorm 0.943 | 2.53s | 51.8k tok/s | mem 7.2GB
+step     32/42 | loss 8.7317 | lr 3.55e-04 | gnorm 1.076 | 2.53s | 51.8k tok/s | mem 7.2GB
+step     33/42 | loss 8.0696 | lr 3.00e-04 | gnorm 0.717 | 2.67s | 49.2k tok/s | mem 7.2GB
+step     34/42 | loss 8.1346 | lr 2.54e-04 | gnorm 0.659 | 2.53s | 51.9k tok/s | mem 7.2GB
+step     35/42 | loss 8.2323 | lr 2.13e-04 | gnorm 0.619 | 2.52s | 51.9k tok/s | mem 7.2GB
+step     36/42 | loss 7.8796 | lr 1.76e-04 | gnorm 0.783 | 2.52s | 52.0k tok/s | mem 7.2GB
+step     37/42 | loss 7.9305 | lr 1.42e-04 | gnorm 0.584 | 2.53s | 51.8k tok/s | mem 7.2GB
+step     38/42 | loss 8.4033 | lr 1.10e-04 | gnorm 0.819 | 2.53s | 51.8k tok/s | mem 7.2GB
+step     39/42 | loss 8.0593 | lr 8.04e-05 | gnorm 1.733 | 2.53s | 51.7k tok/s | mem 7.2GB
+step     40/42 | loss 8.1772 | lr 5.23e-05 | gnorm 0.725 | 2.68s | 48.8k tok/s | mem 7.2GB
+step     41/42 | loss 8.3924 | lr 2.55e-05 | gnorm 0.548 | 2.54s | 51.6k tok/s | mem 7.2GB
+[event][rank0] checkpoint step=42 path=/workspace/h100_smoke/runs_speed/kda_full_s2_16k_h100speed/checkpoints/step_0000042_final healthy=True seconds=1.82
+[event][rank0] train_end step=42 tokens_seen=5505024 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=42

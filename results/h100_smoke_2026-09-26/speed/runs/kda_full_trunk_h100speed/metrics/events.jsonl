@@ -1,0 +1,5 @@
+{"time":1790386490.90878,"kind":"start","rank":0,"segment":0,"fresh":true,"stage":"trunk"}
+{"time":1790386490.9162562,"kind":"train_begin","rank":0,"segment":0,"start_step":0,"max_steps":30,"data_index":0,"world_size":1,"micro_batch_size":4,"grad_accum":8}
+{"time":1790386699.8204768,"kind":"checkpoint","rank":0,"segment":0,"step":30,"path":"/workspace/h100_smoke/runs_speed/kda_full_trunk_h100speed/checkpoints/step_0000030_final","healthy":true,"seconds":1.83}
+{"time":1790386699.8308396,"kind":"train_end","rank":0,"segment":0,"step":30,"tokens_seen":3932160,"n_rollbacks":0,"n_skipped":0}
+{"time":1790386699.8351605,"kind":"exit","rank":0,"segment":0,"code":0,"reason":"completed","step":30}

@@ -1,0 +1,83 @@
+{
+  "lmarch_version": "0.1.0",
+  "arch": "kda_dsa",
+  "pattern": "KKKSKKKSKKKS",
+  "stage": "s2_4k",
+  "layer_types": [
+    "kda",
+    "kda",
+    "kda",
+    "dsa",
+    "kda",
+    "kda",
+    "kda",
+    "dsa",
+    "kda",
+    "kda",
+    "kda",
+    "dsa"
+  ],
+  "params": {
+    "total": 42886180,
+    "embedding": 32833536,
+    "non_embedding": 10052644,
+    "tied_embeddings": true,
+    "by_type": {
+      "kda": {
+        "layers": 9,
+        "mixer": 2696292,
+        "indexer": 0,
+        "ffn": 4866048,
+        "norm": 4608
+      },
+      "dsa": {
+        "layers": 3,
+        "mixer": 786432,
+        "indexer": 75456,
+        "ffn": 1622016,
+        "norm": 1536
+      }
+    },
+    "pattern": "KKKSKKKSKKKS"
+  },
+  "runtime": {
+    "kda_backend": "fla",
+    "kda_backend_reason": "varlen self-check ok (rel err 4.27e-03/5.41e-03)",
+    "attn_backend": "sdpa_mask"
+  },
+  "world_size": 1,
+  "micro_batch_size": 2,
+  "grad_accum": 4,
+  "rows_per_step": 8,
+  "seq_len": 4096,
+  "tokens_per_step": 32768,
+  "stage_start_step": 40,
+  "max_steps": 60,
+  "stage_tokens_planned": 655360,
+  "data": {
+    "packed_dir": "data/packed_smoke",
+    "stage": "stage2",
+    "view": "4k",
+    "steps_available": 32,
+    "doc_mask": true,
+    "max_rows_per_step": 2,
+    "holdout_groups": {
+      "finepdfs_edu/long": 8,
+      "fineweb_edu/short": 8,
+      "code/short": 8,
+      "books/long": 8,
+      "math/short": 8,
+      "fineweb_edu/long": 8,
+      "code/long": 8
+    }
+  },
+  "env": {
+    "torch": "2.12.0+cu130",
+    "cuda": "13.0",
+    "device": "NVIDIA H100 80GB HBM3",
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.39",
+    "host": "9ad1204c85f4"
+  },
+  "updated": "2026-09-26 01:18:20"
+}

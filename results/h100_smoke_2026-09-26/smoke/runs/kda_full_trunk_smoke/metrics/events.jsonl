@@ -1,0 +1,10 @@
+{"time":1790385063.8647685,"kind":"wandb","rank":0,"segment":0,"mode":"offline","url":null,"group":"trunk_smoke"}
+{"time":1790385120.4448502,"kind":"start","rank":0,"segment":0,"fresh":true,"stage":"trunk"}
+{"time":1790385120.454638,"kind":"train_begin","rank":0,"segment":0,"start_step":0,"max_steps":40,"data_index":0,"world_size":1,"micro_batch_size":2,"grad_accum":2}
+{"time":1790385279.7190769,"kind":"checkpoint","rank":0,"segment":0,"step":10,"path":"/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000010","healthy":true,"seconds":0.56}
+{"time":1790385284.878623,"kind":"checkpoint","rank":0,"segment":0,"step":20,"path":"/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000020","healthy":true,"seconds":0.55}
+{"time":1790385287.8287296,"kind":"checkpoint","rank":0,"segment":0,"step":30,"path":"/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000030","healthy":true,"seconds":0.56}
+{"time":1790385288.2559116,"kind":"ratio_alert","rank":0,"segment":0,"step":30,"layer":"embed","group":"embed","state":"high","ratio":0.018522667198300653,"message":"embed/embed update ratio 1.85e-02 high for 3 consecutive checks (LR too high for this layer)"}
+{"time":1790385299.6119654,"kind":"checkpoint","rank":0,"segment":0,"step":40,"path":"/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000040_final","healthy":true,"seconds":0.55}
+{"time":1790385299.6271968,"kind":"train_end","rank":0,"segment":0,"step":40,"tokens_seen":655360,"n_rollbacks":0,"n_skipped":0}
+{"time":1790385299.6302674,"kind":"exit","rank":0,"segment":0,"code":0,"reason":"completed","step":40}

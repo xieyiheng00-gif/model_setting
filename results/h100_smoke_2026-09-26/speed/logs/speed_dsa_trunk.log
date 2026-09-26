@@ -1,0 +1,36 @@
+[event][rank0] start fresh=True stage=trunk
+[lmarch] dsa trunk pattern=SSSSSSSSSSSS params=186.4M (non-emb 87.9M) world=1 rows/step=32x4096 micro=4 accum=8 steps 0->30 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=0 max_steps=30 data_index=0 world_size=1 micro_batch_size=4 grad_accum=8
+step      0/30 | loss 11.8841 | lr 1.20e-04 | gnorm 8.866 | 5.08s | 25.8k tok/s | mem 29.8GB | idxKL 0.016 (dense warm-up)
+step      1/30 | loss 11.2363 | lr 2.40e-04 | gnorm 9.162 | 4.30s | 30.5k tok/s | mem 31.2GB | idxKL 0.013 (dense warm-up)
+step      2/30 | loss 10.8242 | lr 3.60e-04 | gnorm 2.761 | 4.30s | 30.5k tok/s | mem 31.2GB | idxKL 0.007 (dense warm-up)
+step      3/30 | loss 10.7069 | lr 4.80e-04 | gnorm 2.370 | 4.30s | 30.5k tok/s | mem 31.2GB | idxKL 0.008 (dense warm-up)
+step      4/30 | loss 10.2922 | lr 6.00e-04 | gnorm 1.915 | 4.29s | 30.5k tok/s | mem 31.2GB | idxKL 0.020 (dense warm-up)
+step      5/30 | loss 9.7827 | lr 6.00e-04 | gnorm 2.096 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.041
+step      6/30 | loss 9.3907 | lr 6.00e-04 | gnorm 3.442 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.064
+step      7/30 | loss 9.0342 | lr 6.00e-04 | gnorm 5.520 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.090
+step      8/30 | loss 9.2760 | lr 6.00e-04 | gnorm 7.719 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.105
+step      9/30 | loss 8.7468 | lr 6.00e-04 | gnorm 8.137 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.114
+step     10/30 | loss 8.4463 | lr 6.00e-04 | gnorm 5.978 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.126
+step     11/30 | loss 8.2156 | lr 6.00e-04 | gnorm 11.871 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.144
+step     12/30 | loss 8.2540 | lr 6.00e-04 | gnorm 9.736 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.138
+step     13/30 | loss 8.7884 | lr 6.00e-04 | gnorm 8.962 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.144
+step     14/30 | loss 8.7127 | lr 6.00e-04 | gnorm 8.240 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.132
+step     15/30 | loss 8.7455 | lr 6.00e-04 | gnorm 9.635 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.145
+step     16/30 | loss 8.4619 | lr 6.00e-04 | gnorm 5.280 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.147
+step     17/30 | loss 8.1870 | lr 6.00e-04 | gnorm 8.653 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.166
+step     18/30 | loss 8.0741 | lr 6.00e-04 | gnorm 7.198 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.184
+step     19/30 | loss 8.4286 | lr 6.00e-04 | gnorm 4.544 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.181
+step     20/30 | loss 8.5686 | lr 6.00e-04 | gnorm 5.240 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.201
+step     21/30 | loss 8.1124 | lr 6.00e-04 | gnorm 6.432 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.227
+step     22/30 | loss 8.3131 | lr 6.00e-04 | gnorm 6.172 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.237
+step     23/30 | loss 8.2384 | lr 6.00e-04 | gnorm 8.261 | 4.31s | 30.4k tok/s | mem 31.2GB | idxKL 0.241
+step     24/30 | loss 8.3728 | lr 6.00e-04 | gnorm 5.909 | 4.32s | 30.4k tok/s | mem 31.2GB | idxKL 0.237
+step     25/30 | loss 8.2873 | lr 6.00e-04 | gnorm 9.080 | 4.32s | 30.4k tok/s | mem 31.2GB | idxKL 0.238
+step     26/30 | loss 8.2733 | lr 6.00e-04 | gnorm 12.438 | 4.32s | 30.4k tok/s | mem 31.2GB | idxKL 0.312
+step     27/30 | loss 8.3390 | lr 6.00e-04 | gnorm 9.312 | 4.32s | 30.3k tok/s | mem 31.2GB | idxKL 0.317
+step     28/30 | loss 8.2138 | lr 6.00e-04 | gnorm 11.997 | 4.32s | 30.3k tok/s | mem 31.2GB | idxKL 0.335
+step     29/30 | loss 8.2662 | lr 6.00e-04 | gnorm 8.608 | 4.32s | 30.3k tok/s | mem 31.2GB | idxKL 0.303
+[event][rank0] checkpoint step=30 path=/workspace/h100_smoke/runs_speed/dsa_trunk_h100speed/checkpoints/step_0000030_final healthy=True seconds=1.82
+[event][rank0] train_end step=30 tokens_seen=3932160 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=30

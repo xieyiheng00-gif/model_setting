@@ -1,0 +1,2 @@
+{"time": 1790384861.0459535, "kind": "launch", "attempt": 0, "cmd": "/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch dense --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto"}
+{"time": 1790384881.0481153, "kind": "exited", "returncode": 0, "code": 0, "reason": "completed", "step": 60}
