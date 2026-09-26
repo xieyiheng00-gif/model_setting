@@ -117,7 +117,14 @@ class WandbSink:
             mode = "offline"
         id_file = run_dir / "wandb_run_id.txt"      # the same W&B run survives crashes / restarts
         try:
-            run_id = id_file.read_text(encoding="utf-8").strip() if id_file.exists() else wandb.util.generate_id()
+            if id_file.exists():
+                run_id = id_file.read_text(encoding="utf-8").strip()
+            else:  # wandb.util.generate_id was moved to wandb.sdk.lib.runid in newer wandb releases
+                try:
+                    from wandb.sdk.lib.runid import generate_id
+                except ImportError:
+                    generate_id = wandb.util.generate_id
+                run_id = generate_id()
             id_file.write_text(run_id, encoding="utf-8")
             self.run = wandb.init(project=lcfg.wandb_project, entity=lcfg.wandb_entity or None, name=run_name,
                                   id=run_id, resume="allow", group=group or None, job_type=job_type,
