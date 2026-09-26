@@ -6,3 +6,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+# API keys: NEVER commit. Template: secrets.env.example; create the real file with scripts/setup_secrets.py
+secrets.env
+secrets.env.tmp
+*.secrets.env
+.env
+.env.*
+!secrets.env.example

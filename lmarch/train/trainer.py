@@ -37,6 +37,7 @@ from .. import __version__
 from ..config import ARCH_PRESETS, LAYER_TYPE_NAMES, Config, ConfigError, build_config, save_config, stage_tag
 from ..data.packed import N_GROUPS, Holdout, PackedData, Prefetcher, group_name
 from ..model import RunFlags, build_model
+from ..secrets import load_secrets, redact
 from .checkpoint import CheckpointManager
 from .dist import DistInfo, all_reduce_, barrier, cleanup, setup_distributed
 from .guard import TrainingGuard
@@ -324,7 +325,7 @@ class Trainer:
                 self.prefetch.close()
             self._heartbeat(force=True)
             _write_json_atomic(self.run_dir / f"exit_status_rank{self.d.rank}.json",
-                               {"code": code, "reason": reason, "detail": detail[:4000], "step": self.state.step,
+                               {"code": code, "reason": reason, "detail": redact(detail[:4000]), "step": self.state.step,
                                 "micro_batch_size": self.cfg.train.micro_batch_size, "time": time.time()})
             self.log.event("exit", code=code, reason=reason, step=self.state.step)
             self.log.sync()
@@ -793,6 +794,8 @@ def main(argv=None) -> int:
     ap.add_argument("--set", nargs="*", action="extend", default=[], metavar="KEY=VALUE",
                     help="config overrides, e.g. --set optim.lr=3e-4 train.max_steps=100 (repeatable)")
     args = ap.parse_args(argv)
+    # API keys (W&B, HF, GitHub) from the secrets file into this process's environment; names only are printed
+    load_secrets(verbose=os.environ.get("RANK", "0") == "0")
     overrides = list(args.set)
     if args.resume:
         overrides.append(f"checkpoint.resume={args.resume}")

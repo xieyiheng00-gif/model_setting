@@ -17,8 +17,12 @@ import os
 import time
 from pathlib import Path
 
+from ..secrets import redact
+
 
 def _clean(o):
+    if isinstance(o, str):
+        return redact(o)                     # API keys never reach a log file
     if isinstance(o, float):
         return o if math.isfinite(o) else None
     if isinstance(o, dict):
@@ -124,11 +128,11 @@ class RunLogger:
         rec = {"time": time.time(), "kind": kind, "rank": self.rank, "segment": self.segment, **data}
         if echo and (self.main or kind in ("error", "oom", "nonfinite_forensics")):
             msg = " ".join(f"{k}={v}" for k, v in data.items() if not isinstance(v, (dict, list)))
-            print(f"[event][rank{self.rank}] {kind} {msg}", flush=True)
+            print(redact(f"[event][rank{self.rank}] {kind} {msg}"), flush=True)
         if self.main:
             self.events.write(rec)
             if self.wandb is not None:
-                self.wandb.event(kind, data)
+                self.wandb.event(kind, _clean(data))
         else:  # non-main ranks: separate file to avoid interleaved writes
             w = JsonlWriter(self.run_dir / "metrics" / f"events_rank{self.rank}.jsonl")
             w.write(rec)
