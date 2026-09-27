@@ -6,6 +6,7 @@ pyyaml>=6.0
 # logging / analysis
 wandb>=0.17           # live dashboards; authenticate with `wandb login` (never put the key in a config)
 huggingface_hub>=0.34 # `hf download` of the data, checkpoint uploads (checkpoint.hf_repo)
+nvidia-ml-py>=12      # GPU telemetry (import pynvml): metrics/gpu.jsonl, gpu/* in W&B
 pandas>=2.0
 matplotlib>=3.7
 tensorboard>=2.14

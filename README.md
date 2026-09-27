@@ -161,6 +161,8 @@ checkpoints to `checkpoints/`, NaN forensics to `crash_reports/`, plus `meta.jso
 
 - **Every step:** `loss` (global-token-weighted), `lr`, `grad_norm`, **`loss_nonfinite` /
   `grad_nonfinite`**, `step_time`, `tokens_per_sec`, `peak_mem_gb`, `skipped/action/reasons`, plus:
+  - `mfu` (share of the GPUs' BF16 peak, see "GPU monitoring") and `gpu` (telemetry summary since the
+    previous step);
   - `loss_by_source`, `loss_by_row_type`, `valid_tokens`, `long_token_frac`, `mean_segment_len`;
   - `data_index`, `data_batch`, `data_epoch`, indexer KL per layer and type.
 - **Every 100 steps**, per layer and **grouped by layer type**:
@@ -264,6 +266,44 @@ them as a `wandb` event with `mode: failed` and the error, and `scripts/smoke.py
   - `log.wandb_entity=<team>` logs to a team;
   - `log.wandb_log_layers=false` reduces the panels.
 
+## GPU monitoring
+
+**Utilization % alone is misleading.** NVML's "GPU utilization" (what `nvidia-smi` and `nvitop` show) only
+measures how much of the time some kernel was running. It says nothing about how much of the GPU that kernel
+uses: the 1×H100 speed test ran at 99.7% utilization and 12.7% MFU. So the trainer records three things:
+
+| what | where | how often |
+|---|---|---|
+| `mfu`: model FLOPs per second divided by the GPUs' BF16 peak (the speed report's convention) and `tokens_per_sec` | step record, W&B `train/mfu`, and the console line | every step |
+| utilization, memory, power, temperature, SM clock and throttle reasons of **every GPU**, read through NVML by rank 0 | `metrics/gpu.jsonl` (also uploaded to the Hub with each checkpoint); per-step summary in W&B `gpu/*` on the `trainer/step` axis | every 1 s (`log.gpu_interval_sec`) |
+| W&B's own system metrics, including **`smActive` and `pipeTensorActive`** (how busy the SMs and tensor cores really are), NVLink/PCIe traffic, CPU, RAM and disk | the run's System tab in W&B | every 5 s (`log.wandb_stats_interval_sec`; W&B's default is 15 s) |
+
+Notes:
+- The peak is taken from the GPU's name (H100 SXM: 989.4 TFLOPS dense BF16). Set `log.peak_tflops` for
+  other GPUs.
+- For S, C and K layers only their projections are counted, so their MFU is a lower bound.
+- The monitor needs `nvidia-ml-py` (in `requirements.txt`). Without it the run logs a warning and trains
+  normally.
+
+**Live view on the machine:** in a second tmux window, run `nvitop` (`pip install nvitop`; per-GPU history,
+per-process memory) or `watch -n 1 nvidia-smi`. Both are fine for a glance.
+
+**After training** (or during it):
+```bash
+python scripts/gpu_report.py runs/kda_full_trunk_h100x8 runs/kda_full_s2_16k_h100x8 runs/kda_full_s2_4k_h100x8 --out reports/gpu
+```
+This writes `gpu_summary.md` / `.json` with one row per run:
+- mean and 5th-percentile utilization, and minutes below 50%;
+- the slowest GPU;
+- power, SM clock, and the share of time power-capped or thermally throttled;
+- peak memory and temperature;
+- median tokens/s and MFU.
+
+It also writes `<run>_gpu.png`: a utilization heatmap (GPU × time), then power, SM clock and MFU over time,
+with checkpoint saves, evals and restarts marked. Finally it prints the longest low-utilization stretches
+and what was happening during each (start-up, a checkpoint save, an eval, a restart, or nothing known,
+which points at data loading or host overhead).
+
 ## Crash handling
 
 The trainer skips non-finite steps and writes a forensics report naming the first non-finite module
@@ -359,9 +399,15 @@ python scripts/with_secrets.py -- hf download xie1231/model_setting-checkpoints 
 5. **Watch it:** the W&B project `model_setting` has the runs `kda_full_trunk_h100x8`,
    `kda_full_s2_16k_h100x8` and `kda_full_s2_4k_h100x8`. Their x-axis is `trainer/step`, so the branches
    continue from step 13,351.
-6. **Before stopping the machine:** run
-   `python -m lmarch.train.hf_upload --status runs/kda_full_trunk_h100x8` (and the two branch runs) and
-   check that every milestone and final checkpoint says `uploaded`.
+   - Loss: `train/loss`.
+   - Efficiency: `train/mfu`, `train/tokens_per_sec` and `gpu/*`.
+   - Hardware: the System tab (every GPU's utilization, `smActive`, `pipeTensorActive`, power).
+   - On the machine itself: `nvitop` in a second tmux window.
+6. **Before stopping the machine:**
+   - run `python -m lmarch.train.hf_upload --status runs/kda_full_trunk_h100x8` (and the two branch runs)
+     and check that every milestone and final checkpoint says `uploaded`;
+   - `python scripts/gpu_report.py runs/kda_full_*_h100x8 --out reports/gpu` writes the GPU report. The
+     telemetry is also on the Hub, so the report can be made later on any machine.
 
 ## Layout
 
@@ -370,7 +416,7 @@ lmarch/config.py        hyperparameters (dataclasses), YAML inherit (lists allow
 lmarch/data/packed.py   packed-data reader: trunk/stage-2 streams, labels, rank split, holdout, prefetch
 lmarch/data/synthetic.py  synthetic data with the real schema (tests)
 lmarch/model/           common (DocInfo, RoPE, norms), attention (F, S), indexer, kda, csa, model (chunked CE)
-lmarch/train/           trainer, guard, monitor, checkpoint (+ branch loading), hf_upload, logger, optim (WSD), dist
-scripts/                train, supervise, smoke, make_smoke_data, analyze_runs, run_all.{sh,ps1}
+lmarch/train/           trainer, guard, monitor, gpu_monitor, checkpoint (+ branch loading), hf_upload, logger, optim, dist
+scripts/                train, supervise, smoke, make_smoke_data, analyze_runs, gpu_report, run_all.{sh,ps1}
 configs/                base, stage/{trunk,s2_16k,s2_4k}, {h100x8,h100x1,rtx3060,smoke,test}/*
 ```
