@@ -102,6 +102,15 @@ def test_indexer_trained_only_by_kl(arch):
             assert p.grad is None or p.grad.abs().max() == 0, n
 
 
+def test_flops_per_token_matches_the_formula():
+    """MFU numerator: 6 x matmul weights (+ tied LM head) + causal attention of F layers, counted by hand."""
+    m, cfg = tiny("dense")
+    c = cfg.model
+    d, f, L, V, T = c.d_model, c.ffn_dim, c.n_layers, c.vocab_size, cfg.train.seq_len
+    per_layer = 4 * d * d + 3 * d * f                   # qkv + o_proj + gate/up + down
+    assert m.flops_per_token(T) == 6 * (L * per_layer + V * d) + 6 * T * c.n_heads * c.head_dim * L
+
+
 def test_chunked_loss_equals_full_cross_entropy():
     m, cfg = tiny("dense", **{"train.loss_chunk_tokens": 37})
     m.loss_chunk_tokens = 37

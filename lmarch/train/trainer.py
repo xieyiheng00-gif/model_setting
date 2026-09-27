@@ -40,6 +40,7 @@ from ..model import RunFlags, build_model
 from ..secrets import load_secrets, redact
 from .checkpoint import CheckpointManager
 from .dist import DistInfo, all_reduce_, barrier, cleanup, setup_distributed
+from .gpu_monitor import GPUMonitor, peak_flops
 from .guard import TrainingGuard
 from .hf_upload import HFUploader
 from .logger import RunLogger
@@ -150,6 +151,20 @@ class Trainer:
         self._resume_or_branch()
         if self.hf is not None:
             self.hf.resume_pending(self.ckpt.dir)   # uploads a crashed/restarted run did not finish
+        # live MFU and GPU telemetry (rank 0 samples every GPU of the machine)
+        self.flops_per_token = self.raw.flops_per_token(cfg.train.seq_len)
+        gpu_name = torch.cuda.get_device_name(self.dev) if self.dev.type == "cuda" else ""
+        self.peak_flops = peak_flops(gpu_name, cfg.log.peak_tflops)
+        self.runtime_info.update(flops_per_token=self.flops_per_token, peak_tflops=self.peak_flops / 1e12)
+        self.gpumon = None
+        if d.is_main and self.dev.type == "cuda" and cfg.log.gpu_monitor:
+            try:
+                self.gpumon = GPUMonitor(self.run_dir / "metrics" / "gpu.jsonl", cfg.log.gpu_interval_sec,
+                                         lambda: self.state.step)
+                self.runtime_info["gpu_monitor"] = self.gpumon.names
+            except Exception as e:  # noqa: BLE001 - telemetry must never block training
+                self.log.event("warning", message=f"GPU monitor off ({type(e).__name__}: {e}); "
+                                                  "pip install nvidia-ml-py")
         if self.state.step >= cfg.train.max_steps and self.last_ckpt_step != self.state.step:
             raise ConfigError(f"start step {self.state.step} >= train.max_steps {cfg.train.max_steps}")
         if d.is_main:
@@ -334,6 +349,8 @@ class Trainer:
             _write_json_atomic(self.run_dir / f"exit_status_rank{self.d.rank}.json",
                                {"code": code, "reason": reason, "detail": redact(detail[:4000]), "step": self.state.step,
                                 "micro_batch_size": self.cfg.train.micro_batch_size, "time": time.time()})
+            if self.gpumon is not None:
+                self.gpumon.close()
             if self.hf is not None:   # normal end: let the uploads (final checkpoint) finish before exiting
                 self.hf.finish(self.cfg.checkpoint.hf_wait_min * 60 if code == EXIT_OK else 0)
             self.log.event("exit", code=code, reason=reason, step=self.state.step)
@@ -492,6 +509,8 @@ class Trainer:
             "step_time": step_time, "data_time": data_time,
             "tokens_per_sec": self.tokens_per_step / step_time,
             "tokens_per_sec_per_gpu": self.tokens_per_step / step_time / d.world_size,
+            "mfu": (self.flops_per_token * self.tokens_per_step / step_time / (d.world_size * self.peak_flops)
+                    if self.peak_flops > 0 else None),
             "peak_mem_gb": peak_gb, "peak_mem_reserved_gb": reserved_gb,
             "sparse_phase": sparse if self.has_indexer else None, "loss_ema": self.guard.ema,
         }
@@ -501,6 +520,10 @@ class Trainer:
             rec["indexer_kl_by_layer"] = kl_layers
         if spike_detail:
             rec["grad_culprit"] = spike_detail["grad_culprit"]
+        if self.gpumon is not None:
+            gpu = self.gpumon.summary()          # telemetry samples taken since the previous step
+            if gpu:
+                rec["gpu"] = gpu
         self.log.step(rec)
         if verdict.reasons:
             self.log.event("guard", step=step, action=verdict.action, reasons=verdict.reasons,
@@ -532,6 +555,8 @@ class Trainer:
             msg += f" | idxKL {r['indexer_kl']:.3f}" + ("" if r["sparse_phase"] else " (dense warm-up)")
         if r["action"] != "ok" or r["reasons"]:
             msg += f" | {r['action'].upper()} {'; '.join(r['reasons'])}"
+        if r.get("mfu") is not None:
+            msg += f" | MFU {100 * r['mfu']:.1f}%"
         if r.get("grad_culprit"):
             msg += f" | largest grad {r['grad_culprit']}"
         print(msg, flush=True)
@@ -620,7 +645,7 @@ class Trainer:
             self.log.event("ratio_alert", step=step, **a)
         self.log.diag({"step": step, "lr_frac": lr_frac, "sparse_phase": sparse, "global": glob,
                        "by_type": group_by_type(layers), "layers": layers, "alerts": alerts,
-                       "diag_time": time.perf_counter() - t0})
+                       "diag_time": time.perf_counter() - t0, "time": time.time()})
 
     @torch.no_grad()
     def _evaluate(self, step: int, sparse: bool, full: bool = False) -> None:
@@ -679,6 +704,7 @@ class Trainer:
                 rec[f"sparse_minus_dense{sfx}"] = rec[f"val_loss{sfx}"] - rec[f"val_loss_dense_attn{sfx}"]
         raw.train()
         rec["eval_time"] = time.perf_counter() - t0
+        rec["time"] = time.time()                    # wall clock at the end (scripts/gpu_report.py)
         if not full and (self.state.best_val is None or rec["val_loss"] < self.state.best_val):
             self.state.best_val = rec["val_loss"]
         self.log.eval(rec)

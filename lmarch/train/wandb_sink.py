@@ -92,6 +92,14 @@ def _dig(d, path):
     return _num(d)
 
 
+def _settings(wandb, lcfg):
+    """W&B settings; the system-metrics sampling interval (W&B default: 15 s) if this wandb supports it."""
+    try:
+        return wandb.Settings(init_timeout=180, x_stats_sampling_interval=float(lcfg.wandb_stats_interval_sec))
+    except Exception:  # noqa: BLE001 - older wandb without the setting
+        return wandb.Settings(init_timeout=180)
+
+
 class WandbSink:
     def __init__(self, lcfg, run_dir: Path, run_name: str, config: dict, tags: list[str], group: str,
                  job_type: str):
@@ -131,7 +139,7 @@ class WandbSink:
             self.run = wandb.init(project=lcfg.wandb_project, entity=lcfg.wandb_entity or None, name=run_name,
                                   id=run_id, resume="allow", group=group or None, job_type=job_type,
                                   tags=tags, config=config, dir=str(run_dir), mode=mode,
-                                  settings=wandb.Settings(init_timeout=180))
+                                  settings=_settings(wandb, lcfg))
             self.run.define_metric("trainer/step")
             self.run.define_metric("*", step_metric="trainer/step")
             for key, summ in (("train/loss", "min"), ("eval/val_loss", "min"), ("eval_full/val_loss", "last"),
@@ -181,6 +189,8 @@ class WandbSink:
                 _flat(v, "train_source", p)
             elif k == "loss_by_row_type":
                 _flat(v, "train_rowtype", p)
+            elif k == "gpu":                         # telemetry summary since the previous step (gpu_monitor.py)
+                _flat(v, "gpu", p)
             elif k == "indexer_kl_by_type":
                 _flat({f"indexer_kl_{t}": x for t, x in v.items()}, "train", p)
             elif k == "action":
@@ -217,7 +227,7 @@ class WandbSink:
         pre = "eval_full" if rec.get("full") else "eval"
         p: dict = {}
         for k, v in rec.items():
-            if k in ("step", "full", "rows_per_group"):
+            if k in ("step", "full", "rows_per_group", "time"):
                 continue
             if isinstance(v, dict):                 # val_by_group{@L}, val_by_pos{@L}
                 sub = k.replace("val_by_", "")

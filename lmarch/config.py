@@ -237,6 +237,10 @@ class LogConfig:
     wandb_mode: str = "online"      # online | offline | disabled  (online without a key -> offline)
     wandb_alerts: bool = True       # W&B alerts on rollback / divergence / OOM / crash / ratio alerts / stage end
     wandb_log_layers: bool = True   # per-layer panels (layer_<metric>/Lxx_<type>) in addition to per-type ones
+    wandb_stats_interval_sec: float = 5.0   # W&B system metrics (GPU util, smActive, pipeTensorActive, power...)
+    gpu_monitor: bool = True        # rank 0 samples every GPU via NVML -> metrics/gpu.jsonl + gpu/* per step
+    gpu_interval_sec: float = 1.0
+    peak_tflops: float = 0.0        # per-GPU peak for the live MFU; 0 = from the GPU name (H100 SXM: 989.4)
     heartbeat_interval_sec: float = 30.0
 
 
@@ -406,6 +410,8 @@ def validate(cfg: Config) -> None:
         raise ConfigError("model.kda.backend must be auto|fla|torch")
     if cfg.log.wandb_mode not in ("online", "offline", "disabled"):
         raise ConfigError("log.wandb_mode must be online|offline|disabled")
+    if cfg.log.gpu_interval_sec <= 0 or cfg.log.wandb_stats_interval_sec <= 0 or cfg.log.peak_tflops < 0:
+        raise ConfigError("log.gpu_interval_sec and log.wandb_stats_interval_sec must be > 0, log.peak_tflops >= 0")
     if m.attn_backend not in ("auto", "sdpa", "flash_varlen"):
         raise ConfigError("model.attn_backend must be auto|sdpa|flash_varlen")
     t, dc, ev = cfg.train, cfg.data, cfg.eval

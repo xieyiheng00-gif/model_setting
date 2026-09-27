@@ -188,6 +188,14 @@ class LM(nn.Module):
             out.append((name, p, key, grp))
         return out
 
+    def flops_per_token(self, seq_len: int) -> float:
+        """Training FLOPs per token, the MFU convention of the H100 speed report: 6 x the unique matmul weights
+        (every Linear, incl. the tied LM head; the embedding lookup is free) + causal attention in F layers
+        (6 x seq_len x n_heads x head_dim each). S/C/K mixer cores are not counted: a lower bound for them."""
+        n_matmul = sum({id(m.weight): m.weight.numel() for m in self.modules() if isinstance(m, nn.Linear)}.values())
+        n_f = self.pattern.count("F")
+        return 6.0 * n_matmul + 6.0 * seq_len * self.cfg.n_heads * self.cfg.head_dim * n_f
+
     def param_counts(self) -> dict:
         total = sum(p.numel() for p in self.parameters())
         emb = self.embed.weight.numel()

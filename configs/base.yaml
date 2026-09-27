@@ -137,3 +137,7 @@ log:
   wandb_mode: online             # online | offline | disabled (no key found -> offline + `wandb sync` later)
   wandb_alerts: true
   wandb_log_layers: true
+  wandb_stats_interval_sec: 5    # W&B system tab: every GPU's util, smActive, pipeTensorActive, power, clocks
+  gpu_monitor: true              # metrics/gpu.jsonl (1 s, all GPUs) + gpu/* in every step record
+  gpu_interval_sec: 1
+  peak_tflops: 0                 # 0 = from the GPU name; used for the live `mfu`
