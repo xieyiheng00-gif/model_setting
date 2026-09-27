@@ -41,9 +41,9 @@ LAYER_METRICS = {                       # per-layer series (key inside the layer
     ("mixer", "sink_mass"): "sink_mass",
 }
 ALERT_EVENTS = {"rollback": "WARN", "diverged": "ERROR", "oom": "ERROR", "error": "ERROR",
-                "ratio_alert": "WARN", "checkpoint_corrupt": "WARN"}
+                "ratio_alert": "WARN", "checkpoint_corrupt": "WARN", "hf_upload_failed": "WARN"}
 COUNT_EVENTS = ("rollback", "nonfinite_forensics", "ratio_alert", "resume", "checkpoint", "guard",
-                "checkpoint_corrupt")
+                "checkpoint_corrupt", "hf_upload_failed")
 
 
 def has_api_key() -> bool:

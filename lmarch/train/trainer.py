@@ -41,6 +41,7 @@ from ..secrets import load_secrets, redact
 from .checkpoint import CheckpointManager
 from .dist import DistInfo, all_reduce_, barrier, cleanup, setup_distributed
 from .guard import TrainingGuard
+from .hf_upload import HFUploader
 from .logger import RunLogger
 from .monitor import GROUPS, ParamIndex, RatioAlerts, collect_probe, group_by_type, health
 from .optim import build_optimizer, lr_multiplier
@@ -144,7 +145,11 @@ class Trainer:
         self.rollback_counts: Counter = Counter()
         self.last_ckpt_step = -1
         self.last_heartbeat = 0.0
+        self.hf = (HFUploader(cfg.checkpoint, self.run_dir, cfg.log.run_name, self.log)
+                   if (d.is_main and cfg.checkpoint.hf_repo) else None)
         self._resume_or_branch()
+        if self.hf is not None:
+            self.hf.resume_pending(self.ckpt.dir)   # uploads a crashed/restarted run did not finish
         if self.state.step >= cfg.train.max_steps and self.last_ckpt_step != self.state.step:
             raise ConfigError(f"start step {self.state.step} >= train.max_steps {cfg.train.max_steps}")
         if d.is_main:
@@ -291,6 +296,8 @@ class Trainer:
     def _heartbeat(self, force: bool = False) -> None:
         if not self.d.is_main:
             return
+        if self.hf is not None:
+            self.hf.poll()                           # log finished Hugging Face uploads
         now = time.time()
         if force or now - self.last_heartbeat >= self.cfg.log.heartbeat_interval_sec:
             self.last_heartbeat = now
@@ -327,6 +334,8 @@ class Trainer:
             _write_json_atomic(self.run_dir / f"exit_status_rank{self.d.rank}.json",
                                {"code": code, "reason": reason, "detail": redact(detail[:4000]), "step": self.state.step,
                                 "micro_batch_size": self.cfg.train.micro_batch_size, "time": time.time()})
+            if self.hf is not None:   # normal end: let the uploads (final checkpoint) finish before exiting
+                self.hf.finish(self.cfg.checkpoint.hf_wait_min * 60 if code == EXIT_OK else 0)
             self.log.event("exit", code=code, reason=reason, step=self.state.step)
             self.log.sync()
             self.log.close(code)
@@ -689,6 +698,8 @@ class Trainer:
         self.last_ckpt_step = self.state.step
         self.log.event("checkpoint", step=self.state.step, path=str(path), healthy=healthy,
                        seconds=round(self.ckpt.last_save_seconds, 2))
+        if self.hf is not None:
+            self.hf.on_save(path, self.state.step, tag)
         self.log.sync()
 
     def _emergency_save(self) -> None:

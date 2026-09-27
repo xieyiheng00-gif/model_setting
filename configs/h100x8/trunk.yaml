@@ -8,3 +8,5 @@ train:
   micro_batch_size: 4
 log:
   tensorboard: true
+checkpoint:
+  hf_repo: xie1231/model_setting-checkpoints   # private; milestones + final are uploaded

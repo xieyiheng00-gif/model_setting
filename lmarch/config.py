@@ -194,6 +194,10 @@ class CheckpointConfig:
     init_from: str = ""             # branch start when the run has no checkpoint yet: a checkpoint dir or a
                                     # run dir (its *_final / newest). {arch} {hardware} {out_dir} are substituted.
     init_allow_new_params: bool = True  # e.g. a DSA indexer added at the branch: fresh init + fresh Adam state
+    hf_repo: str = ""               # Hugging Face model repo for checkpoint uploads ("user/name"; "" = off)
+    hf_every: int = 0               # upload every N steps (multiple of `interval`; 0 = milestone_interval) + final
+    hf_private: bool = True         # create the repo as private if it does not exist
+    hf_wait_min: int = 60           # at the normal end of a run, wait up to this long for uploads to finish
 
 
 @dataclass
@@ -425,6 +429,16 @@ def validate(cfg: Config) -> None:
         raise ConfigError("schedule.decay_frac must be in [0, 1]")
     if decay_start(cfg) > t.max_steps:
         raise ConfigError("schedule.decay_start is after train.max_steps")
+    c = cfg.checkpoint
+    if c.hf_repo:
+        if c.hf_repo.count("/") != 1 or c.hf_repo.startswith("/") or c.hf_repo.endswith("/"):
+            raise ConfigError(f"checkpoint.hf_repo must look like <user or org>/<name>, got '{c.hf_repo}'")
+        every = c.hf_every or c.milestone_interval
+        if every < 0 or c.hf_wait_min < 0:
+            raise ConfigError("checkpoint.hf_every and checkpoint.hf_wait_min must be >= 0")
+        if every and c.interval > 0 and every % c.interval:
+            raise ConfigError(f"checkpoint.hf_every ({every}) must be a multiple of checkpoint.interval "
+                              f"({c.interval}) so that it falls on a saved checkpoint")
     if 0 < decay_start(cfg) < s.warmup_steps:
         raise ConfigError("warmup must end before the decay phase starts")
 
