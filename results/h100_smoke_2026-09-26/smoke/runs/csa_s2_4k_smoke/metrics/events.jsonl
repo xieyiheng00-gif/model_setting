@@ -1,0 +1,7 @@
+{"time":1790385684.1862667,"kind":"wandb","rank":0,"segment":0,"mode":"offline","url":null,"group":"s2_4k_smoke"}
+{"time":1790385687.0634952,"kind":"branch_init","rank":0,"segment":0,"step":40,"stage":"s2_4k","branch_from":"/workspace/model_setting/runs_smoke/csa_trunk_smoke/checkpoints/step_0000040_final","new_params":[],"dropped_params":[],"optimizer_state_copied":230,"optimizer_params":230,"stage_start_step":40,"branch_stage":"trunk","branch_config_arch":"csa"}
+{"time":1790385687.072761,"kind":"train_begin","rank":0,"segment":0,"start_step":40,"max_steps":60,"data_index":0,"world_size":1,"micro_batch_size":2,"grad_accum":4}
+{"time":1790385694.324997,"kind":"checkpoint","rank":0,"segment":0,"step":50,"path":"/workspace/model_setting/runs_smoke/csa_s2_4k_smoke/checkpoints/step_0000050","healthy":true,"seconds":0.57}
+{"time":1790385731.5917246,"kind":"checkpoint","rank":0,"segment":0,"step":60,"path":"/workspace/model_setting/runs_smoke/csa_s2_4k_smoke/checkpoints/step_0000060_final","healthy":true,"seconds":0.56}
+{"time":1790385731.6000938,"kind":"train_end","rank":0,"segment":0,"step":60,"tokens_seen":1310720,"n_rollbacks":0,"n_skipped":0}
+{"time":1790385731.6015449,"kind":"exit","rank":0,"segment":0,"code":0,"reason":"completed","step":60}

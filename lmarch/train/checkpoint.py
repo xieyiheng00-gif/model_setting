@@ -19,6 +19,7 @@ import numpy as np
 import torch
 
 from .dist import DistInfo, barrier
+from .hf_upload import PENDING as HF_PENDING
 
 COMPLETE = "COMPLETE"
 
@@ -86,6 +87,8 @@ class CheckpointManager:
         ckpts = self.list_valid()
         regular = [(s, p) for s, p in ckpts if not self._is_milestone(s, p)]
         for s, p in regular[self.keep_last:]:
+            if (p / HF_PENDING).exists():             # still being uploaded to the Hub: keep it for now
+                continue
             shutil.rmtree(p, ignore_errors=True)
 
     def _is_milestone(self, step: int, path: Path) -> bool:

@@ -41,9 +41,9 @@ LAYER_METRICS = {                       # per-layer series (key inside the layer
     ("mixer", "sink_mass"): "sink_mass",
 }
 ALERT_EVENTS = {"rollback": "WARN", "diverged": "ERROR", "oom": "ERROR", "error": "ERROR",
-                "ratio_alert": "WARN", "checkpoint_corrupt": "WARN"}
+                "ratio_alert": "WARN", "checkpoint_corrupt": "WARN", "hf_upload_failed": "WARN"}
 COUNT_EVENTS = ("rollback", "nonfinite_forensics", "ratio_alert", "resume", "checkpoint", "guard",
-                "checkpoint_corrupt")
+                "checkpoint_corrupt", "hf_upload_failed")
 
 
 def has_api_key() -> bool:
@@ -101,14 +101,16 @@ class WandbSink:
         self.run_name = run_name
         self.counts: dict = {}
         self.last_step = 0
-        self.status = "disabled"
+        self.status = "disabled"            # disabled | online | offline | failed
+        self.error: str | None = None
         mode = lcfg.wandb_mode
         if mode == "disabled":
             return
         try:
             import wandb
         except ImportError:
-            print("[wandb] package not installed (pip install wandb): W&B logging disabled", flush=True)
+            self.status, self.error = "failed", "wandb package not installed (pip install wandb)"
+            print(f"[wandb] WARNING: {self.error}: W&B logging is OFF for this run", flush=True)
             return
         if mode == "online" and not has_api_key():
             print("[wandb] no API key on this machine (run `wandb login` or set WANDB_API_KEY): logging OFFLINE "
@@ -117,7 +119,14 @@ class WandbSink:
             mode = "offline"
         id_file = run_dir / "wandb_run_id.txt"      # the same W&B run survives crashes / restarts
         try:
-            run_id = id_file.read_text(encoding="utf-8").strip() if id_file.exists() else wandb.util.generate_id()
+            if id_file.exists():
+                run_id = id_file.read_text(encoding="utf-8").strip()
+            else:  # wandb.util.generate_id was moved to wandb.sdk.lib.runid in newer wandb releases
+                try:
+                    from wandb.sdk.lib.runid import generate_id
+                except ImportError:
+                    generate_id = wandb.util.generate_id
+                run_id = generate_id()
             id_file.write_text(run_id, encoding="utf-8")
             self.run = wandb.init(project=lcfg.wandb_project, entity=lcfg.wandb_entity or None, name=run_name,
                                   id=run_id, resume="allow", group=group or None, job_type=job_type,
@@ -134,7 +143,10 @@ class WandbSink:
             url = getattr(self.run, "url", None)
             print(f"[wandb] {mode}: {url or run_dir / 'wandb'}", flush=True)
         except Exception as e:  # noqa: BLE001 - never block training on W&B
-            print(f"[wandb] init failed ({type(e).__name__}: {e}): W&B logging disabled", flush=True)
+            # recorded as a `wandb` event with status=failed (it used to be one easily-missed console line)
+            self.status, self.error = "failed", f"init failed: {type(e).__name__}: {e}"
+            print(f"[wandb] WARNING: {self.error}: W&B logging is OFF for this run "
+                  f"(training continues; metrics are still written to {run_dir / 'metrics'})", flush=True)
             self.run = None
 
     # ---- helpers ------------------------------------------------------------------------
@@ -149,6 +161,7 @@ class WandbSink:
             self._disable(e)
 
     def _disable(self, e: Exception) -> None:
+        self.status, self.error = "failed", f"logging failed: {type(e).__name__}: {e}"
         print(f"[wandb] logging failed ({type(e).__name__}: {e}): W&B disabled for the rest of the run", flush=True)
         try:
             self.run.finish(exit_code=1)

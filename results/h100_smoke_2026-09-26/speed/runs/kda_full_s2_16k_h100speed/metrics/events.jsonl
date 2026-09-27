@@ -1,0 +1,5 @@
+{"time":1790386710.8123374,"kind":"branch_init","rank":0,"segment":0,"step":30,"stage":"s2_16k","branch_from":"/workspace/h100_smoke/runs_speed/kda_full_trunk_h100speed/checkpoints/step_0000030_final","new_params":[],"dropped_params":[],"optimizer_state_copied":200,"optimizer_params":200,"stage_start_step":30,"branch_stage":"trunk","branch_config_arch":"kda_full"}
+{"time":1790386710.8201773,"kind":"train_begin","rank":0,"segment":0,"start_step":30,"max_steps":42,"data_index":0,"world_size":1,"micro_batch_size":1,"grad_accum":8}
+{"time":1790386744.571467,"kind":"checkpoint","rank":0,"segment":0,"step":42,"path":"/workspace/h100_smoke/runs_speed/kda_full_s2_16k_h100speed/checkpoints/step_0000042_final","healthy":true,"seconds":1.82}
+{"time":1790386744.5833178,"kind":"train_end","rank":0,"segment":0,"step":42,"tokens_seen":5505024,"n_rollbacks":0,"n_skipped":0}
+{"time":1790386744.5844753,"kind":"exit","rank":0,"segment":0,"code":0,"reason":"completed","step":42}

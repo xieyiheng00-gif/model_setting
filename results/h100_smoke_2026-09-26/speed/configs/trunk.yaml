@@ -1,0 +1,6 @@
+# 32 rows x 4096 = 131K tokens/step (micro 4 x accum 8), 30 steps.
+inherit: [/workspace/model_setting/configs/h100x1/trunk.yaml, common.yaml]
+data:
+  trunk_rows_per_step: 32
+train:
+  max_steps: 30

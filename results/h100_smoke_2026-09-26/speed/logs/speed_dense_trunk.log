@@ -1,0 +1,36 @@
+[event][rank0] start fresh=True stage=trunk
+[lmarch] dense trunk pattern=FFFFFFFFFFFF params=183.5M (non-emb 85.0M) world=1 rows/step=32x4096 micro=4 accum=8 steps 0->30 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=0 max_steps=30 data_index=0 world_size=1 micro_batch_size=4 grad_accum=8
+step      0/30 | loss 11.9167 | lr 1.20e-04 | gnorm 8.902 | 2.06s | 63.7k tok/s | mem 14.5GB
+step      1/30 | loss 11.3745 | lr 2.40e-04 | gnorm 12.200 | 1.38s | 94.7k tok/s | mem 15.9GB
+step      2/30 | loss 10.9013 | lr 3.60e-04 | gnorm 2.878 | 1.38s | 95.0k tok/s | mem 15.9GB
+step      3/30 | loss 10.7385 | lr 4.80e-04 | gnorm 2.115 | 1.38s | 95.0k tok/s | mem 15.9GB
+step      4/30 | loss 10.3330 | lr 6.00e-04 | gnorm 1.927 | 1.38s | 95.0k tok/s | mem 15.9GB
+step      5/30 | loss 9.8367 | lr 6.00e-04 | gnorm 1.846 | 1.38s | 95.0k tok/s | mem 15.9GB
+step      6/30 | loss 9.4434 | lr 6.00e-04 | gnorm 1.704 | 1.38s | 95.1k tok/s | mem 15.9GB
+step      7/30 | loss 9.0671 | lr 6.00e-04 | gnorm 1.489 | 1.38s | 95.1k tok/s | mem 15.9GB
+step      8/30 | loss 9.2355 | lr 6.00e-04 | gnorm 1.180 | 1.38s | 95.1k tok/s | mem 15.9GB
+step      9/30 | loss 8.6773 | lr 6.00e-04 | gnorm 1.094 | 1.38s | 95.1k tok/s | mem 15.9GB
+step     10/30 | loss 8.3400 | lr 6.00e-04 | gnorm 1.058 | 1.38s | 95.1k tok/s | mem 15.9GB
+step     11/30 | loss 8.0842 | lr 6.00e-04 | gnorm 0.842 | 1.38s | 95.1k tok/s | mem 15.9GB
+step     12/30 | loss 8.1009 | lr 6.00e-04 | gnorm 0.714 | 1.38s | 95.1k tok/s | mem 15.9GB
+step     13/30 | loss 8.8639 | lr 6.00e-04 | gnorm 23.559 | 1.38s | 95.1k tok/s | mem 15.9GB
+step     14/30 | loss 8.6909 | lr 6.00e-04 | gnorm 1.051 | 1.38s | 95.1k tok/s | mem 15.9GB
+step     15/30 | loss 8.4317 | lr 6.00e-04 | gnorm 0.816 | 1.38s | 95.1k tok/s | mem 15.9GB
+step     16/30 | loss 8.4661 | lr 6.00e-04 | gnorm 1.069 | 1.38s | 95.1k tok/s | mem 15.9GB
+step     17/30 | loss 8.1717 | lr 6.00e-04 | gnorm 1.004 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     18/30 | loss 8.0545 | lr 6.00e-04 | gnorm 0.784 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     19/30 | loss 8.2990 | lr 6.00e-04 | gnorm 0.697 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     20/30 | loss 8.3895 | lr 6.00e-04 | gnorm 0.658 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     21/30 | loss 8.0419 | lr 6.00e-04 | gnorm 0.837 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     22/30 | loss 8.2100 | lr 6.00e-04 | gnorm 0.877 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     23/30 | loss 8.1212 | lr 6.00e-04 | gnorm 0.970 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     24/30 | loss 8.2454 | lr 6.00e-04 | gnorm 0.844 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     25/30 | loss 8.2088 | lr 6.00e-04 | gnorm 2.559 | 1.38s | 94.9k tok/s | mem 15.9GB
+step     26/30 | loss 8.1947 | lr 6.00e-04 | gnorm 0.605 | 1.38s | 94.9k tok/s | mem 15.9GB
+step     27/30 | loss 8.2467 | lr 6.00e-04 | gnorm 0.686 | 1.38s | 95.0k tok/s | mem 15.9GB
+step     28/30 | loss 8.0914 | lr 6.00e-04 | gnorm 0.613 | 1.38s | 94.9k tok/s | mem 15.9GB
+step     29/30 | loss 8.1627 | lr 6.00e-04 | gnorm 0.509 | 1.38s | 94.8k tok/s | mem 15.9GB
+[event][rank0] checkpoint step=30 path=/workspace/h100_smoke/runs_speed/dense_trunk_h100speed/checkpoints/step_0000030_final healthy=True seconds=1.81
+[event][rank0] train_end step=30 tokens_seen=3932160 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=30

@@ -99,13 +99,18 @@ diag:
   ratio_high: 1.0e-2
   ratio_low: 1.0e-4
   ratio_persist: 3
+  alert_start_step: 1000     # ratio alerts only after this step (ratios are logged from step 0)
 
 checkpoint:
-  interval: 500
-  keep_last: 3
+  interval: 500              # a full checkpoint (weights + Adam, ~2.2 GB at full size) every 500 steps
+  keep_last: 3               # regular checkpoints kept on disk; milestones and *_final are never deleted
   milestone_interval: 2500
   resume: auto
   init_from: ""
+  hf_repo: ""                # Hugging Face model repo for checkpoint uploads ("" = off; set in configs/h100x*/)
+  hf_every: 0                # 0 = upload the milestones (every 2500 steps) + the final checkpoint
+  hf_private: true
+  hf_wait_min: 60            # at the end of a run, wait up to 60 min for the final upload
 
 guard:
   max_consecutive_bad: 3

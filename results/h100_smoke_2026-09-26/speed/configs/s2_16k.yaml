@@ -1,0 +1,10 @@
+# 8 of the 32 stage-2 rows x 16384 = 131K tokens/step (micro 1 x accum 8, activation checkpointing), 20 steps.
+inherit: [/workspace/model_setting/configs/h100x1/s2_16k.yaml, common.yaml]
+data:
+  max_rows_per_step: 8
+train:
+  max_steps: 42        # 12 steps (was 20 for dense and dsa; step times are flat after warm-up)
+schedule:
+  decay_start: 30
+eval:
+  extra_seq_lens: []

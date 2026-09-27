@@ -1,0 +1,152 @@
+hardware: h100speed
+model:
+  arch: kda_full
+  layer_pattern: ''
+  vocab_size: 128256
+  d_model: 768
+  n_layers: 12
+  n_heads: 12
+  head_dim: 64
+  ffn_dim: 2048
+  max_seq_len: 4096
+  rope_theta: 10000.0
+  norm_eps: 1.0e-06
+  qk_norm: false
+  tie_embeddings: true
+  init_std: 0.02
+  hybrid_softmax_nope: false
+  attn_backend: auto
+  dsa:
+    top_k: 512
+    index_heads: 4
+    index_dim: 64
+    index_rope_dim: 32
+  csa:
+    compress_ratio: 4
+    kv_heads: 6
+    top_k: 128
+    window: 128
+    rope_dim: 32
+    attn_sink: true
+    index_heads: 4
+    index_dim: 64
+    index_rope_dim: 32
+  kda:
+    conv_size: 4
+    gate_rank: 64
+    backend: auto
+    chunk_size: 32
+    A_init_min: 1.0
+    A_init_max: 16.0
+    dt_min: 0.001
+    dt_max: 0.1
+    dt_init_floor: 0.0001
+  indexer:
+    dense_warmup_steps: 5
+    detach_input: true
+    loss_coef: 1.0
+    kl_max_rows: 0
+    lr_mult: 1.0
+train:
+  seq_len: 4096
+  micro_batch_size: 4
+  max_steps: 30
+  seed: 1337
+  dtype: bf16
+  compile: false
+  activation_checkpointing: false
+  grad_clip: 1.0
+  z_loss_coef: 0.0
+  loss_chunk_tokens: 2048
+  tf32: true
+  nccl_timeout_min: 30
+optim:
+  lr: 0.0006
+  beta1: 0.9
+  beta2: 0.95
+  eps: 1.0e-08
+  weight_decay: 0.1
+  fused: true
+schedule:
+  warmup_steps: 5
+  decay_frac: 0.0
+  decay_start: -1
+  decay_shape: 1-sqrt
+  min_lr_ratio: 0.0
+data:
+  packed_dir: /workspace/model_setting/data/packed_smoke
+  data_prep_root: ''
+  stage: trunk
+  stage2_view: 16k
+  trunk_rows_per_step: 32
+  stage_start_step: -1
+  doc_mask: true
+  max_rows_per_step: 0
+  check_token_ids: true
+  prefetch: 2
+eval:
+  interval: 0
+  rows_per_group: 1
+  final_full: false
+  extra_seq_lens: []
+  micro_batch_size: 1
+  position_buckets:
+  - 64
+  - 256
+  - 1024
+  - 4096
+  - 8192
+  dense_compare: true
+diag:
+  interval: 1000
+  probe_batch_size: 1
+  ratio_high: 0.01
+  ratio_low: 0.0001
+  ratio_persist: 3
+  alert_min_lr_frac: 0.1
+checkpoint:
+  interval: 0
+  keep_last: 1
+  milestone_interval: 0
+  resume: auto
+  save_final: true
+  init_from: ''
+  init_allow_new_params: true
+guard:
+  max_consecutive_bad: 3
+  bad_window: 100
+  max_bad_in_window: 8
+  ema_beta: 0.98
+  ema_warmup: 10
+  spike_zscore: 6.0
+  spike_ratio: 1.15
+  skip_spike_updates: false
+  spike_window: 50
+  spike_rollback_count: 5
+  grad_spike_ratio: 10.0
+  rollback_skip_extra: 20
+  lr_scale_on_rollback: 1.0
+  max_rollbacks: 5
+  max_rollbacks_per_checkpoint: 2
+  healthy_window: 20
+  forensics: true
+  max_forensics: 5
+log:
+  out_dir: /workspace/h100_smoke/runs_speed
+  run_name: kda_full_trunk_h100speed
+  console_interval: 1
+  tensorboard: false
+  wandb: false
+  wandb_project: model_setting
+  wandb_entity: ''
+  wandb_group: trunk_h100speed
+  wandb_tags:
+  - speedtest
+  wandb_mode: offline
+  wandb_alerts: true
+  wandb_log_layers: true
+  heartbeat_interval_sec: 30.0
+debug:
+  inject_nan_steps: []
+  inject_spike_steps: []
+  inject_exception_step: -1

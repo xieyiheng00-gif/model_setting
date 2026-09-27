@@ -1,0 +1,1078 @@
+
+=== dense / trunk ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/dense_trunk_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch dense --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch dense --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id y92mxl06.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/dense_trunk_smoke/wandb/offline-run-20260926_010653-y92mxl06
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/dense_trunk_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=trunk_smoke
+[event][rank0] start fresh=True stage=trunk
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] dense trunk pattern=FFFFFFFFFFFF params=42.5M (non-emb 9.6M) world=1 rows/step=4x4096 micro=2 accum=2 steps 0->40 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=0 max_steps=40 data_index=0 world_size=1 micro_batch_size=2 grad_accum=2
+step      0/40 | loss 11.8110 | lr 1.20e-04 | gnorm 12.585 | 0.97s | 16.9k tok/s | mem 5.6GB
+step      2/40 | loss 11.5833 | lr 3.60e-04 | gnorm 5.726 | 0.11s | 152.3k tok/s | mem 6.0GB
+step      4/40 | loss 11.3478 | lr 6.00e-04 | gnorm 2.130 | 0.11s | 151.3k tok/s | mem 6.0GB
+step      6/40 | loss 10.9997 | lr 6.00e-04 | gnorm 1.536 | 0.11s | 150.4k tok/s | mem 6.0GB
+step      8/40 | loss 10.7360 | lr 6.00e-04 | gnorm 1.351 | 0.11s | 151.3k tok/s | mem 6.0GB
+[event][rank0] checkpoint step=10 path=/workspace/model_setting/runs_smoke/dense_trunk_smoke/checkpoints/step_0000010 healthy=True seconds=0.51
+step     10/40 | loss 10.3563 | lr 6.00e-04 | gnorm 1.462 | 0.11s | 148.7k tok/s | mem 6.0GB
+step     12/40 | loss 10.2465 | lr 6.00e-04 | gnorm 1.211 | 0.11s | 151.4k tok/s | mem 6.0GB
+step     14/40 | loss 9.7114 | lr 6.00e-04 | gnorm 1.356 | 0.11s | 151.5k tok/s | mem 6.0GB
+step     16/40 | loss 9.8572 | lr 6.00e-04 | gnorm 1.068 | 0.11s | 150.9k tok/s | mem 6.0GB
+step     18/40 | loss 9.1588 | lr 6.00e-04 | gnorm 1.862 | 0.11s | 151.2k tok/s | mem 6.0GB
+[eval] step 20 | val_loss 9.4474 | fineweb_edu/long:8.850, fineweb_edu/short:9.038, finepdfs_edu/long:9.304, books/long:8.878, code/long:10.474, code/short:10.346, math/short:9.242 (1s)
+[event][rank0] checkpoint step=20 path=/workspace/model_setting/runs_smoke/dense_trunk_smoke/checkpoints/step_0000020 healthy=True seconds=0.51
+step     20/40 | loss 8.9720 | lr 6.00e-04 | gnorm 1.285 | 0.11s | 148.7k tok/s | mem 6.0GB
+step     22/40 | loss 9.1285 | lr 6.00e-04 | gnorm 1.259 | 0.11s | 151.1k tok/s | mem 6.0GB
+step     24/40 | loss 8.5735 | lr 6.00e-04 | gnorm 1.169 | 0.14s | 117.4k tok/s | mem 6.0GB
+step     26/40 | loss 9.1454 | lr 6.00e-04 | gnorm 1.035 | 0.11s | 149.8k tok/s | mem 6.0GB
+step     28/40 | loss 8.3636 | lr 6.00e-04 | gnorm 1.058 | 0.11s | 150.8k tok/s | mem 6.0GB
+[event][rank0] checkpoint step=30 path=/workspace/model_setting/runs_smoke/dense_trunk_smoke/checkpoints/step_0000030 healthy=True seconds=0.54
+[event][rank0] ratio_alert step=30 layer=embed group=embed state=high ratio=0.017996666069688912 message=embed/embed update ratio 1.80e-02 high for 3 consecutive checks (LR too high for this layer)
+step     30/40 | loss 8.3488 | lr 6.00e-04 | gnorm 1.078 | 0.11s | 148.3k tok/s | mem 6.0GB
+step     32/40 | loss 8.1099 | lr 6.00e-04 | gnorm 0.945 | 0.11s | 152.1k tok/s | mem 6.0GB
+step     34/40 | loss 8.1619 | lr 6.00e-04 | gnorm 0.726 | 0.11s | 151.3k tok/s | mem 6.0GB
+step     36/40 | loss 8.4253 | lr 6.00e-04 | gnorm 0.557 | 0.11s | 152.0k tok/s | mem 6.0GB
+step     38/40 | loss 8.7929 | lr 6.00e-04 | gnorm 2.677 | 0.11s | 151.2k tok/s | mem 6.0GB
+[eval FULL] step 40 | val_loss 8.5107 | fineweb_edu/long:8.043, fineweb_edu/short:7.899, finepdfs_edu/long:8.366, books/long:7.868, code/long:9.521, code/short:9.737, math/short:8.140 (3s)
+[event][rank0] checkpoint step=40 path=/workspace/model_setting/runs_smoke/dense_trunk_smoke/checkpoints/step_0000040_final healthy=True seconds=0.51
+[event][rank0] train_end step=40 tokens_seen=655360 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=40
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁███▇
+wandb:      diag/embed_update_ratio ▁██▆▄
+wandb:       diag/embed_weight_norm ▁▁▃▆█
+wandb:    diag/final_norm_grad_norm ▁▅█▆▂
+wandb: diag/final_norm_update_ratio ▁▆██▆
+wandb:  diag/final_norm_weight_norm ▁▂▄▆█
+wandb:          diag/logit_lse_mean █▅▂▁▁
+wandb:               diag/logit_max ▁▂▄▆█
+wandb:               diag/logit_min █▇▅▂▁
+wandb:               diag/logit_std ▁▂▅▇█
+wandb:                         +194 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.88189
+wandb:      diag/embed_update_ratio 0.01248
+wandb:       diag/embed_weight_norm 145.11884
+wandb:    diag/final_norm_grad_norm 0.01505
+wandb: diag/final_norm_update_ratio 0.00042
+wandb:  diag/final_norm_weight_norm 16.28612
+wandb:          diag/logit_lse_mean 10.06568
+wandb:               diag/logit_max 7.38007
+wandb:               diag/logit_min -5.83413
+wandb:               diag/logit_std 1.27274
+wandb:                         +212 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/dense_trunk_smoke/wandb/offline-run-20260926_010653-y92mxl06
+wandb: Find logs at: ./runs_smoke/dense_trunk_smoke/wandb/offline-run-20260926_010653-y92mxl06/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 40}
+=== dense / trunk: exit 0 in 20s
+
+=== dense / s2_16k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/dense_s2_16k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch dense --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch dense --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id bkgulda1.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/dense_s2_16k_smoke/wandb/offline-run-20260926_010713-bkgulda1
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/dense_s2_16k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_16k_smoke
+[event][rank0] branch_init step=40 stage=s2_16k branch_from=/workspace/model_setting/runs_smoke/dense_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=74 optimizer_params=74 stage_start_step=40 branch_stage=trunk branch_config_arch=dense
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] dense s2_16k pattern=FFFFFFFFFFFF params=42.5M (non-emb 9.6M) world=1 rows/step=2x16384 micro=1 accum=2 steps 40->60 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=1 grad_accum=2
+step     40/60 | loss 8.8983 | lr 6.00e-04 | gnorm 0.863 | 1.15s | 28.5k tok/s | mem 4.3GB
+step     42/60 | loss 8.3168 | lr 4.10e-04 | gnorm 0.788 | 0.33s | 99.9k tok/s | mem 4.3GB
+step     44/60 | loss 7.7517 | lr 3.32e-04 | gnorm 2.504 | 0.33s | 99.5k tok/s | mem 4.3GB
+step     46/60 | loss 7.8294 | lr 2.71e-04 | gnorm 0.593 | 0.33s | 99.9k tok/s | mem 4.3GB
+step     48/60 | loss 7.8357 | lr 2.21e-04 | gnorm 0.968 | 0.33s | 99.5k tok/s | mem 4.3GB
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/dense_s2_16k_smoke/checkpoints/step_0000050 healthy=True seconds=0.51
+step     50/60 | loss 8.9341 | lr 1.76e-04 | gnorm 0.891 | 0.33s | 99.1k tok/s | mem 4.3GB
+step     52/60 | loss 8.5554 | lr 1.35e-04 | gnorm 0.706 | 0.33s | 99.9k tok/s | mem 4.3GB
+step     54/60 | loss 8.5468 | lr 9.80e-05 | gnorm 2.906 | 0.33s | 99.5k tok/s | mem 4.3GB
+step     56/60 | loss 8.8427 | lr 6.33e-05 | gnorm 1.879 | 0.33s | 99.6k tok/s | mem 4.3GB
+step     58/60 | loss 7.7876 | lr 3.08e-05 | gnorm 0.747 | 0.33s | 99.7k tok/s | mem 4.3GB
+[eval FULL] step 60 | val_loss 8.3919 | val@4096 8.3926 | fineweb_edu/long:8.020, fineweb_edu/short:7.898, finepdfs_edu/long:8.277, books/long:7.681, code/long:9.287, code/short:9.497, math/short:8.082 (6s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/dense_s2_16k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.51
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁██
+wandb:      diag/embed_update_ratio █▂▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm █▁▃
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁▇█
+wandb:          diag/logit_lse_mean █▅▁
+wandb:               diag/logit_max ▁█▇
+wandb:               diag/logit_min █▂▁
+wandb:               diag/logit_std ▁█▆
+wandb:                         +192 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.87629
+wandb:      diag/embed_update_ratio 0.00024
+wandb:       diag/embed_weight_norm 152.30441
+wandb:    diag/final_norm_grad_norm 0.02132
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.32428
+wandb:          diag/logit_lse_mean 10.05947
+wandb:               diag/logit_max 7.6718
+wandb:               diag/logit_min -6.33245
+wandb:               diag/logit_std 1.37286
+wandb:                         +225 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/dense_s2_16k_smoke/wandb/offline-run-20260926_010713-bkgulda1
+wandb: Find logs at: ./runs_smoke/dense_s2_16k_smoke/wandb/offline-run-20260926_010713-bkgulda1/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== dense / s2_16k: exit 0 in 30s
+
+=== dense / s2_4k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/dense_s2_4k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch dense --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch dense --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id yhgqgshv.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/dense_s2_4k_smoke/wandb/offline-run-20260926_010743-yhgqgshv
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/dense_s2_4k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_4k_smoke
+[event][rank0] branch_init step=40 stage=s2_4k branch_from=/workspace/model_setting/runs_smoke/dense_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=74 optimizer_params=74 stage_start_step=40 branch_stage=trunk branch_config_arch=dense
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] dense s2_4k pattern=FFFFFFFFFFFF params=42.5M (non-emb 9.6M) world=1 rows/step=8x4096 micro=2 accum=4 steps 40->60 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=2 grad_accum=4
+step     40/60 | loss 8.9084 | lr 6.00e-04 | gnorm 0.908 | 1.04s | 31.4k tok/s | mem 6.0GB
+step     42/60 | loss 8.3212 | lr 4.10e-04 | gnorm 0.813 | 0.21s | 156.7k tok/s | mem 6.0GB
+step     44/60 | loss 7.6915 | lr 3.32e-04 | gnorm 0.662 | 0.21s | 157.0k tok/s | mem 6.0GB
+step     46/60 | loss 7.8283 | lr 2.71e-04 | gnorm 0.620 | 0.21s | 156.9k tok/s | mem 6.0GB
+step     48/60 | loss 7.8245 | lr 2.21e-04 | gnorm 0.868 | 0.21s | 157.0k tok/s | mem 6.0GB
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/dense_s2_4k_smoke/checkpoints/step_0000050 healthy=True seconds=0.51
+step     50/60 | loss 8.9355 | lr 1.76e-04 | gnorm 0.895 | 0.21s | 155.4k tok/s | mem 6.0GB
+step     52/60 | loss 8.5508 | lr 1.35e-04 | gnorm 0.688 | 0.21s | 156.8k tok/s | mem 6.0GB
+step     54/60 | loss 8.4761 | lr 9.80e-05 | gnorm 2.111 | 0.21s | 156.8k tok/s | mem 6.0GB
+step     56/60 | loss 8.8312 | lr 6.33e-05 | gnorm 1.850 | 0.21s | 156.9k tok/s | mem 6.0GB
+step     58/60 | loss 7.7676 | lr 3.08e-05 | gnorm 0.632 | 0.21s | 157.2k tok/s | mem 6.0GB
+[eval FULL] step 60 | val_loss 8.3894 | val@16384 8.3892 | fineweb_edu/long:8.014, fineweb_edu/short:7.895, finepdfs_edu/long:8.279, books/long:7.667, code/long:9.298, code/short:9.495, math/short:8.076 (6s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/dense_s2_4k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.51
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁██
+wandb:      diag/embed_update_ratio █▃▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm █▁▂
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁▇█
+wandb:          diag/logit_lse_mean █▄▁
+wandb:               diag/logit_max ▁██
+wandb:               diag/logit_min █▂▁
+wandb:               diag/logit_std ▁█▂
+wandb:                         +192 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.87514
+wandb:      diag/embed_update_ratio 0.00025
+wandb:       diag/embed_weight_norm 152.38028
+wandb:    diag/final_norm_grad_norm 0.01946
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.32496
+wandb:          diag/logit_lse_mean 9.92911
+wandb:               diag/logit_max 7.74486
+wandb:               diag/logit_min -6.34765
+wandb:               diag/logit_std 1.28566
+wandb:                         +225 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/dense_s2_4k_smoke/wandb/offline-run-20260926_010743-yhgqgshv
+wandb: Find logs at: ./runs_smoke/dense_s2_4k_smoke/wandb/offline-run-20260926_010743-yhgqgshv/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== dense / s2_4k: exit 0 in 20s
+
+=== dsa / trunk ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/dsa_trunk_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id 61pktfv1.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/dsa_trunk_smoke/wandb/offline-run-20260926_010803-61pktfv1
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/dsa_trunk_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=trunk_smoke
+[event][rank0] start fresh=True stage=trunk
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] dsa trunk pattern=SSSSSSSSSSSS params=42.8M (non-emb 9.9M) world=1 rows/step=4x4096 micro=2 accum=2 steps 0->40 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=0 max_steps=40 data_index=0 world_size=1 micro_batch_size=2 grad_accum=2
+step      0/40 | loss 11.8572 | lr 1.20e-04 | gnorm 17.026 | 1.09s | 15.0k tok/s | mem 11.4GB | idxKL 0.003 (dense warm-up)
+step      2/40 | loss 11.5558 | lr 3.60e-04 | gnorm 3.481 | 0.30s | 55.1k tok/s | mem 11.8GB | idxKL 0.002 (dense warm-up)
+step      4/40 | loss 11.3398 | lr 6.00e-04 | gnorm 2.047 | 0.30s | 55.2k tok/s | mem 11.8GB | idxKL 0.001 (dense warm-up)
+step      6/40 | loss 10.9722 | lr 6.00e-04 | gnorm 1.583 | 0.30s | 55.1k tok/s | mem 11.8GB | idxKL 0.002 (dense warm-up)
+step      8/40 | loss 10.7361 | lr 6.00e-04 | gnorm 1.457 | 0.30s | 55.1k tok/s | mem 11.8GB | idxKL 0.004 (dense warm-up)
+[event][rank0] checkpoint step=10 path=/workspace/model_setting/runs_smoke/dsa_trunk_smoke/checkpoints/step_0000010 healthy=True seconds=0.54
+step     10/40 | loss 10.3612 | lr 6.00e-04 | gnorm 1.468 | 0.30s | 54.3k tok/s | mem 11.8GB | idxKL 0.005
+step     12/40 | loss 10.2818 | lr 6.00e-04 | gnorm 1.220 | 0.30s | 55.0k tok/s | mem 11.8GB | idxKL 0.007
+step     14/40 | loss 9.7294 | lr 6.00e-04 | gnorm 1.392 | 0.30s | 54.9k tok/s | mem 11.8GB | idxKL 0.009
+step     16/40 | loss 9.8770 | lr 6.00e-04 | gnorm 1.422 | 0.30s | 54.9k tok/s | mem 11.8GB | idxKL 0.012
+step     18/40 | loss 9.2142 | lr 6.00e-04 | gnorm 2.165 | 0.30s | 54.9k tok/s | mem 11.8GB | idxKL 0.014
+[eval] step 20 | val_loss 9.4734 | dense-attn 9.4733 | fineweb_edu/long:8.877, fineweb_edu/short:9.051, finepdfs_edu/long:9.345, books/long:8.907, code/long:10.496, code/short:10.391, math/short:9.245 (3s)
+[event][rank0] checkpoint step=20 path=/workspace/model_setting/runs_smoke/dsa_trunk_smoke/checkpoints/step_0000020 healthy=True seconds=0.67
+step     20/40 | loss 8.9926 | lr 6.00e-04 | gnorm 1.430 | 0.30s | 54.3k tok/s | mem 11.8GB | idxKL 0.014
+step     22/40 | loss 9.1621 | lr 6.00e-04 | gnorm 1.377 | 0.30s | 54.9k tok/s | mem 11.8GB | idxKL 0.015
+step     24/40 | loss 8.5899 | lr 6.00e-04 | gnorm 1.316 | 0.30s | 54.8k tok/s | mem 11.8GB | idxKL 0.017
+step     26/40 | loss 9.1619 | lr 6.00e-04 | gnorm 1.079 | 0.30s | 54.9k tok/s | mem 11.8GB | idxKL 0.017
+step     28/40 | loss 8.3692 | lr 6.00e-04 | gnorm 1.195 | 0.30s | 54.9k tok/s | mem 11.8GB | idxKL 0.024
+[event][rank0] checkpoint step=30 path=/workspace/model_setting/runs_smoke/dsa_trunk_smoke/checkpoints/step_0000030 healthy=True seconds=0.72
+[event][rank0] ratio_alert step=30 layer=embed group=embed state=high ratio=0.01794952591780632 message=embed/embed update ratio 1.79e-02 high for 3 consecutive checks (LR too high for this layer)
+step     30/40 | loss 8.3535 | lr 6.00e-04 | gnorm 1.253 | 0.30s | 54.2k tok/s | mem 11.8GB | idxKL 0.025
+step     32/40 | loss 8.1016 | lr 6.00e-04 | gnorm 1.231 | 0.30s | 54.8k tok/s | mem 11.8GB | idxKL 0.026
+step     34/40 | loss 8.1442 | lr 6.00e-04 | gnorm 1.194 | 0.30s | 54.9k tok/s | mem 11.8GB | idxKL 0.026
+step     36/40 | loss 8.4486 | lr 6.00e-04 | gnorm 1.268 | 0.30s | 54.5k tok/s | mem 11.8GB | idxKL 0.025
+step     38/40 | loss 8.8186 | lr 6.00e-04 | gnorm 1.354 | 0.30s | 54.3k tok/s | mem 11.8GB | idxKL 0.024
+[eval FULL] step 40 | val_loss 8.5708 | dense-attn 8.5709 | fineweb_edu/long:8.055, fineweb_edu/short:7.917, finepdfs_edu/long:8.388, books/long:7.883, code/long:9.684, code/short:9.952, math/short:8.115 (11s)
+[event][rank0] checkpoint step=40 path=/workspace/model_setting/runs_smoke/dsa_trunk_smoke/checkpoints/step_0000040_final healthy=True seconds=0.53
+[event][rank0] train_end step=40 tokens_seen=655360 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=40
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁█▇▇▇
+wandb:      diag/embed_update_ratio ▁██▆▄
+wandb:       diag/embed_weight_norm ▁▁▃▆█
+wandb:    diag/final_norm_grad_norm ▁▆█▆▃
+wandb: diag/final_norm_update_ratio ▁▆██▄
+wandb:  diag/final_norm_weight_norm ▁▂▄▆█
+wandb:          diag/logit_lse_mean █▅▂▁▁
+wandb:               diag/logit_max ▁▁▄▆█
+wandb:               diag/logit_min █▇▅▂▁
+wandb:               diag/logit_std ▁▂▄▇█
+wandb:                         +255 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.86433
+wandb:      diag/embed_update_ratio 0.01228
+wandb:       diag/embed_weight_norm 143.97403
+wandb:    diag/final_norm_grad_norm 0.03172
+wandb: diag/final_norm_update_ratio 0.00033
+wandb:  diag/final_norm_weight_norm 16.2774
+wandb:          diag/logit_lse_mean 10.16776
+wandb:               diag/logit_max 7.15491
+wandb:               diag/logit_min -5.68914
+wandb:               diag/logit_std 1.30791
+wandb:                         +275 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/dsa_trunk_smoke/wandb/offline-run-20260926_010803-61pktfv1
+wandb: Find logs at: ./runs_smoke/dsa_trunk_smoke/wandb/offline-run-20260926_010803-61pktfv1/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 40}
+=== dsa / trunk: exit 0 in 40s
+
+=== dsa / s2_16k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/dsa_s2_16k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id n8w3oupp.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/dsa_s2_16k_smoke/wandb/offline-run-20260926_010843-n8w3oupp
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/dsa_s2_16k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_16k_smoke
+[event][rank0] branch_init step=40 stage=s2_16k branch_from=/workspace/model_setting/runs_smoke/dsa_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=134 optimizer_params=134 stage_start_step=40 branch_stage=trunk branch_config_arch=dsa
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] dsa s2_16k pattern=SSSSSSSSSSSS params=42.8M (non-emb 9.9M) world=1 rows/step=2x16384 micro=1 accum=2 steps 40->60 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=1 grad_accum=2
+step     40/60 | loss 8.9893 | lr 6.00e-04 | gnorm 6.862 | 3.61s | 9.1k tok/s | mem 11.2GB | idxKL 0.037
+step     42/60 | loss 8.4017 | lr 4.10e-04 | gnorm 1.851 | 2.67s | 12.3k tok/s | mem 11.2GB | idxKL 0.020
+step     44/60 | loss 7.7742 | lr 3.32e-04 | gnorm 1.283 | 2.67s | 12.3k tok/s | mem 11.2GB | idxKL 0.020
+step     46/60 | loss 7.8710 | lr 2.71e-04 | gnorm 0.674 | 2.67s | 12.3k tok/s | mem 11.2GB | idxKL 0.016
+step     48/60 | loss 7.9043 | lr 2.21e-04 | gnorm 1.351 | 2.67s | 12.3k tok/s | mem 11.2GB | idxKL 0.019
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/dsa_s2_16k_smoke/checkpoints/step_0000050 healthy=True seconds=0.53
+step     50/60 | loss 9.0495 | lr 1.76e-04 | gnorm 1.448 | 2.68s | 12.2k tok/s | mem 11.2GB | idxKL 0.015
+step     52/60 | loss 8.6575 | lr 1.35e-04 | gnorm 1.719 | 2.67s | 12.3k tok/s | mem 11.2GB | idxKL 0.018
+step     54/60 | loss 8.5855 | lr 9.80e-05 | gnorm 3.622 | 2.67s | 12.3k tok/s | mem 11.2GB | idxKL 0.013
+step     56/60 | loss 8.8475 | lr 6.33e-05 | gnorm 2.512 | 2.67s | 12.3k tok/s | mem 11.2GB | idxKL 0.013
+step     58/60 | loss 7.9153 | lr 3.08e-05 | gnorm 2.926 | 2.67s | 12.3k tok/s | mem 11.2GB | idxKL 0.014
+[eval FULL] step 60 | val_loss 8.5261 | dense-attn 8.4977 | val@4096 8.5280 | fineweb_edu/long:8.084, fineweb_edu/short:8.012, finepdfs_edu/long:8.346, books/long:7.787, code/long:9.445, code/short:9.774, math/short:8.234 (24s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/dsa_s2_16k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.53
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁█▄
+wandb:      diag/embed_update_ratio █▂▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm ▂█▁
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁██
+wandb:          diag/logit_lse_mean █▅▁
+wandb:               diag/logit_max ▁█▆
+wandb:               diag/logit_min █▁▆
+wandb:               diag/logit_std █▇▁
+wandb:                         +251 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.39658
+wandb:      diag/embed_update_ratio 0.00019
+wandb:       diag/embed_weight_norm 150.31812
+wandb:    diag/final_norm_grad_norm 0.00634
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.30379
+wandb:          diag/logit_lse_mean 9.95102
+wandb:               diag/logit_max 7.56813
+wandb:               diag/logit_min -5.74496
+wandb:               diag/logit_std 1.2176
+wandb:                         +286 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/dsa_s2_16k_smoke/wandb/offline-run-20260926_010843-n8w3oupp
+wandb: Find logs at: ./runs_smoke/dsa_s2_16k_smoke/wandb/offline-run-20260926_010843-n8w3oupp/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== dsa / s2_16k: exit 0 in 90s
+
+=== dsa / s2_4k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/dsa_s2_4k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id ooupul8m.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/dsa_s2_4k_smoke/wandb/offline-run-20260926_011013-ooupul8m
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/dsa_s2_4k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_4k_smoke
+[event][rank0] branch_init step=40 stage=s2_4k branch_from=/workspace/model_setting/runs_smoke/dsa_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=134 optimizer_params=134 stage_start_step=40 branch_stage=trunk branch_config_arch=dsa
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] dsa s2_4k pattern=SSSSSSSSSSSS params=42.8M (non-emb 9.9M) world=1 rows/step=8x4096 micro=2 accum=4 steps 40->60 {'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=2 grad_accum=4
+step     40/60 | loss 8.9884 | lr 6.00e-04 | gnorm 1.022 | 1.52s | 21.6k tok/s | mem 11.8GB | idxKL 0.019
+step     42/60 | loss 8.3823 | lr 4.10e-04 | gnorm 0.914 | 0.59s | 55.4k tok/s | mem 11.8GB | idxKL 0.013
+step     44/60 | loss 7.7477 | lr 3.32e-04 | gnorm 0.914 | 0.59s | 55.4k tok/s | mem 11.8GB | idxKL 0.017
+step     46/60 | loss 7.8636 | lr 2.71e-04 | gnorm 1.137 | 0.59s | 55.4k tok/s | mem 11.8GB | idxKL 0.021
+step     48/60 | loss 7.8574 | lr 2.21e-04 | gnorm 1.228 | 0.59s | 55.4k tok/s | mem 11.8GB | idxKL 0.022
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/dsa_s2_4k_smoke/checkpoints/step_0000050 healthy=True seconds=0.52
+step     50/60 | loss 9.0212 | lr 1.76e-04 | gnorm 1.225 | 0.60s | 55.0k tok/s | mem 11.8GB | idxKL 0.018
+step     52/60 | loss 8.6198 | lr 1.35e-04 | gnorm 0.871 | 0.59s | 55.4k tok/s | mem 11.8GB | idxKL 0.015
+step     54/60 | loss 8.5783 | lr 9.80e-05 | gnorm 2.483 | 0.61s | 53.8k tok/s | mem 11.8GB | idxKL 0.010
+[event][rank0] guard step=55 action=ok loss=9.149395938263126 grad_norm=12.706679344177246
+step     55/60 | loss 9.1494 | lr 8.04e-05 | gnorm 12.707 | 0.59s | 55.2k tok/s | mem 11.8GB | idxKL 0.013 | OK grad_norm_spike gn=12.707 ema=1.129
+step     56/60 | loss 8.8156 | lr 6.33e-05 | gnorm 1.976 | 0.59s | 55.3k tok/s | mem 11.8GB | idxKL 0.014
+step     58/60 | loss 7.8290 | lr 3.08e-05 | gnorm 1.197 | 0.59s | 55.4k tok/s | mem 11.8GB | idxKL 0.023
+[eval FULL] step 60 | val_loss 8.4502 | dense-attn 8.4397 | val@16384 8.4512 | fineweb_edu/long:8.068, fineweb_edu/short:7.957, finepdfs_edu/long:8.320, books/long:7.725, code/long:9.374, code/short:9.600, math/short:8.109 (21s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/dsa_s2_4k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.53
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▆▁█
+wandb:      diag/embed_update_ratio █▃▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm █▅▁
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁▇█
+wandb:          diag/logit_lse_mean █▃▁
+wandb:               diag/logit_max ▁█▆
+wandb:               diag/logit_min █▁▁
+wandb:               diag/logit_std █▅▁
+wandb:                         +252 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.86822
+wandb:      diag/embed_update_ratio 0.00023
+wandb:       diag/embed_weight_norm 150.7782
+wandb:    diag/final_norm_grad_norm 0.0161
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.30201
+wandb:          diag/logit_lse_mean 9.9279
+wandb:               diag/logit_max 7.31553
+wandb:               diag/logit_min -5.91828
+wandb:               diag/logit_std 1.23232
+wandb:                         +287 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/dsa_s2_4k_smoke/wandb/offline-run-20260926_011013-ooupul8m
+wandb: Find logs at: ./runs_smoke/dsa_s2_4k_smoke/wandb/offline-run-20260926_011013-ooupul8m/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== dsa / s2_4k: exit 0 in 50s
+
+=== kda_full / trunk ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/kda_full_trunk_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch kda_full --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch kda_full --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id btt82c7k.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/kda_full_trunk_smoke/wandb/offline-run-20260926_011103-btt82c7k
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/kda_full_trunk_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=trunk_smoke
+[event][rank0] start fresh=True stage=trunk
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] kda_full trunk pattern=KKKFKKKFKKKF params=42.8M (non-emb 10.0M) world=1 rows/step=4x4096 micro=2 accum=2 steps 0->40 {'kda_backend': 'fla', 'kda_backend_reason': 'varlen self-check ok (rel err 4.27e-03/5.41e-03)', 'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=0 max_steps=40 data_index=0 world_size=1 micro_batch_size=2 grad_accum=2
+step      0/40 | loss 11.8408 | lr 1.20e-04 | gnorm 6.426 | 156.27s | 0.1k tok/s | mem 6.4GB
+step      2/40 | loss 11.7426 | lr 3.60e-04 | gnorm 3.738 | 0.21s | 77.6k tok/s | mem 6.7GB
+step      4/40 | loss 11.4573 | lr 6.00e-04 | gnorm 2.773 | 0.23s | 70.5k tok/s | mem 6.7GB
+step      6/40 | loss 11.0939 | lr 6.00e-04 | gnorm 1.549 | 0.22s | 73.6k tok/s | mem 6.7GB
+step      8/40 | loss 10.8820 | lr 6.00e-04 | gnorm 1.338 | 0.21s | 78.1k tok/s | mem 6.7GB
+[event][rank0] checkpoint step=10 path=/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000010 healthy=True seconds=0.56
+step     10/40 | loss 10.5184 | lr 6.00e-04 | gnorm 1.459 | 0.22s | 75.1k tok/s | mem 6.7GB
+step     12/40 | loss 10.4301 | lr 6.00e-04 | gnorm 1.208 | 0.21s | 77.4k tok/s | mem 6.7GB
+step     14/40 | loss 9.9298 | lr 6.00e-04 | gnorm 1.359 | 0.21s | 76.5k tok/s | mem 6.7GB
+step     16/40 | loss 10.0246 | lr 6.00e-04 | gnorm 1.079 | 0.21s | 76.8k tok/s | mem 6.7GB
+step     18/40 | loss 9.3199 | lr 6.00e-04 | gnorm 1.888 | 0.21s | 76.9k tok/s | mem 6.7GB
+[eval] step 20 | val_loss 9.5822 | fineweb_edu/long:9.041, fineweb_edu/short:9.173, finepdfs_edu/long:9.439, books/long:9.017, code/long:10.556, code/short:10.466, math/short:9.384 (2s)
+[event][rank0] checkpoint step=20 path=/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000020 healthy=True seconds=0.55
+step     20/40 | loss 9.1368 | lr 6.00e-04 | gnorm 1.303 | 0.22s | 75.0k tok/s | mem 6.7GB
+step     22/40 | loss 9.2501 | lr 6.00e-04 | gnorm 1.280 | 0.22s | 75.4k tok/s | mem 6.7GB
+step     24/40 | loss 8.6886 | lr 6.00e-04 | gnorm 1.196 | 0.22s | 74.9k tok/s | mem 6.7GB
+step     26/40 | loss 9.2158 | lr 6.00e-04 | gnorm 1.055 | 0.21s | 77.2k tok/s | mem 6.7GB
+step     28/40 | loss 8.4170 | lr 6.00e-04 | gnorm 1.087 | 0.21s | 77.2k tok/s | mem 6.7GB
+[event][rank0] checkpoint step=30 path=/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000030 healthy=True seconds=0.56
+[event][rank0] ratio_alert step=30 layer=embed group=embed state=high ratio=0.018522667198300653 message=embed/embed update ratio 1.85e-02 high for 3 consecutive checks (LR too high for this layer)
+step     30/40 | loss 8.3830 | lr 6.00e-04 | gnorm 1.103 | 0.22s | 75.2k tok/s | mem 6.7GB
+step     32/40 | loss 8.1387 | lr 6.00e-04 | gnorm 0.982 | 0.21s | 76.6k tok/s | mem 6.7GB
+step     34/40 | loss 8.1738 | lr 6.00e-04 | gnorm 0.747 | 0.21s | 76.8k tok/s | mem 6.7GB
+step     36/40 | loss 8.4612 | lr 6.00e-04 | gnorm 0.536 | 0.21s | 77.2k tok/s | mem 6.7GB
+step     38/40 | loss 8.8720 | lr 6.00e-04 | gnorm 1.209 | 0.21s | 77.0k tok/s | mem 6.7GB
+[eval FULL] step 40 | val_loss 8.5886 | fineweb_edu/long:8.064, fineweb_edu/short:7.916, finepdfs_edu/long:8.397, books/long:7.869, code/long:9.734, code/short:9.993, math/short:8.147 (9s)
+[event][rank0] checkpoint step=40 path=/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000040_final healthy=True seconds=0.55
+[event][rank0] train_end step=40 tokens_seen=655360 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=40
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁███▇
+wandb:      diag/embed_update_ratio ▁██▆▄
+wandb:       diag/embed_weight_norm ▁▁▃▆█
+wandb:    diag/final_norm_grad_norm ▁▅█▇▃
+wandb: diag/final_norm_update_ratio ▁▆██▅
+wandb:  diag/final_norm_weight_norm ▁▁▃▆█
+wandb:          diag/logit_lse_mean █▅▂▁▁
+wandb:               diag/logit_max ▁▂▄▆█
+wandb:               diag/logit_min █▇▅▂▁
+wandb:               diag/logit_std ▁▂▄▇█
+wandb:                         +314 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.92851
+wandb:      diag/embed_update_ratio 0.01268
+wandb:       diag/embed_weight_norm 144.7067
+wandb:    diag/final_norm_grad_norm 0.02906
+wandb: diag/final_norm_update_ratio 0.00038
+wandb:  diag/final_norm_weight_norm 16.26404
+wandb:          diag/logit_lse_mean 10.09471
+wandb:               diag/logit_max 7.00045
+wandb:               diag/logit_min -6.07468
+wandb:               diag/logit_std 1.37583
+wandb:                         +332 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/kda_full_trunk_smoke/wandb/offline-run-20260926_011103-btt82c7k
+wandb: Find logs at: ./runs_smoke/kda_full_trunk_smoke/wandb/offline-run-20260926_011103-btt82c7k/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 40}
+=== kda_full / trunk: exit 0 in 240s
+
+=== kda_full / s2_16k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/kda_full_s2_16k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch kda_full --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch kda_full --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id oqq8pz0z.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/kda_full_s2_16k_smoke/wandb/offline-run-20260926_011503-oqq8pz0z
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/kda_full_s2_16k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_16k_smoke
+[event][rank0] branch_init step=40 stage=s2_16k branch_from=/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=200 optimizer_params=200 stage_start_step=40 branch_stage=trunk branch_config_arch=kda_full
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] kda_full s2_16k pattern=KKKFKKKFKKKF params=42.8M (non-emb 10.0M) world=1 rows/step=2x16384 micro=1 accum=2 steps 40->60 {'kda_backend': 'fla', 'kda_backend_reason': 'varlen self-check ok (rel err 4.27e-03/5.41e-03)', 'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=1 grad_accum=2
+step     40/60 | loss 9.0034 | lr 6.00e-04 | gnorm 0.847 | 1.54s | 21.3k tok/s | mem 4.3GB
+step     42/60 | loss 8.4016 | lr 4.10e-04 | gnorm 0.890 | 0.44s | 74.5k tok/s | mem 4.3GB
+step     44/60 | loss 7.7363 | lr 3.32e-04 | gnorm 0.618 | 0.44s | 74.6k tok/s | mem 4.3GB
+step     46/60 | loss 7.8637 | lr 2.71e-04 | gnorm 0.495 | 0.44s | 74.9k tok/s | mem 4.3GB
+step     48/60 | loss 7.8543 | lr 2.21e-04 | gnorm 0.822 | 0.45s | 72.4k tok/s | mem 4.3GB
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/kda_full_s2_16k_smoke/checkpoints/step_0000050 healthy=True seconds=0.54
+step     50/60 | loss 9.0798 | lr 1.76e-04 | gnorm 0.984 | 0.44s | 73.9k tok/s | mem 4.3GB
+[event][rank0] guard step=51 action=ok loss=10.713484681148142 grad_norm=96.34493255615234
+step     51/60 | loss 10.7135 | lr 1.55e-04 | gnorm 96.345 | 0.44s | 73.9k tok/s | mem 4.3GB | OK grad_norm_spike gn=96.345 ema=0.844
+step     52/60 | loss 8.6691 | lr 1.35e-04 | gnorm 0.647 | 0.44s | 74.7k tok/s | mem 4.3GB
+step     54/60 | loss 8.5783 | lr 9.80e-05 | gnorm 2.075 | 0.44s | 74.3k tok/s | mem 4.3GB
+step     56/60 | loss 8.9500 | lr 6.33e-05 | gnorm 2.068 | 0.45s | 73.1k tok/s | mem 4.3GB
+step     58/60 | loss 7.8432 | lr 3.08e-05 | gnorm 0.703 | 0.48s | 68.9k tok/s | mem 4.3GB
+[eval FULL] step 60 | val_loss 8.4867 | val@4096 8.4864 | fineweb_edu/long:8.077, fineweb_edu/short:7.959, finepdfs_edu/long:8.319, books/long:7.739, code/long:9.490, code/short:9.713, math/short:8.110 (12s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/kda_full_s2_16k_smoke/checkpoints/step_0000060_final healthy=True seconds=1.16
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▄█▁
+wandb:      diag/embed_update_ratio █▂▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm ▆█▁
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁██
+wandb:          diag/logit_lse_mean █▃▁
+wandb:               diag/logit_max █▃▁
+wandb:               diag/logit_min ▁▃█
+wandb:               diag/logit_std █▄▁
+wandb:                         +313 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.73218
+wandb:      diag/embed_update_ratio 0.0002
+wandb:       diag/embed_weight_norm 151.66563
+wandb:    diag/final_norm_grad_norm 0.04592
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.28727
+wandb:          diag/logit_lse_mean 9.91598
+wandb:               diag/logit_max 6.86405
+wandb:               diag/logit_min -5.9526
+wandb:               diag/logit_std 1.32439
+wandb:                         +346 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/kda_full_s2_16k_smoke/wandb/offline-run-20260926_011503-oqq8pz0z
+wandb: Find logs at: ./runs_smoke/kda_full_s2_16k_smoke/wandb/offline-run-20260926_011503-oqq8pz0z/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== kda_full / s2_16k: exit 0 in 40s
+
+=== kda_full / s2_4k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/kda_full_s2_4k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch kda_full --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch kda_full --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id l1uegd0x.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/kda_full_s2_4k_smoke/wandb/offline-run-20260926_011543-l1uegd0x
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/kda_full_s2_4k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_4k_smoke
+[event][rank0] branch_init step=40 stage=s2_4k branch_from=/workspace/model_setting/runs_smoke/kda_full_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=200 optimizer_params=200 stage_start_step=40 branch_stage=trunk branch_config_arch=kda_full
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] kda_full s2_4k pattern=KKKFKKKFKKKF params=42.8M (non-emb 10.0M) world=1 rows/step=8x4096 micro=2 accum=4 steps 40->60 {'kda_backend': 'fla', 'kda_backend_reason': 'varlen self-check ok (rel err 4.27e-03/5.41e-03)', 'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=2 grad_accum=4
+step     40/60 | loss 9.0030 | lr 6.00e-04 | gnorm 0.846 | 1.30s | 25.2k tok/s | mem 6.7GB
+step     42/60 | loss 8.4015 | lr 4.10e-04 | gnorm 0.890 | 0.60s | 54.5k tok/s | mem 6.7GB
+step     44/60 | loss 7.7365 | lr 3.32e-04 | gnorm 0.617 | 0.40s | 81.3k tok/s | mem 6.7GB
+step     46/60 | loss 7.8638 | lr 2.71e-04 | gnorm 0.495 | 0.40s | 81.4k tok/s | mem 6.7GB
+step     48/60 | loss 7.8541 | lr 2.21e-04 | gnorm 0.823 | 0.40s | 81.0k tok/s | mem 6.7GB
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/kda_full_s2_4k_smoke/checkpoints/step_0000050 healthy=True seconds=0.55
+step     50/60 | loss 9.0778 | lr 1.76e-04 | gnorm 1.027 | 0.41s | 79.4k tok/s | mem 6.7GB
+[event][rank0] guard step=51 action=ok loss=11.063715397016178 grad_norm=9.858819007873535
+step     51/60 | loss 11.0637 | lr 1.55e-04 | gnorm 9.859 | 0.43s | 76.6k tok/s | mem 6.7GB | OK loss_spike loss=11.0637 ema=8.8734 std=0.3558; grad_norm_spike gn=9.859 ema=0.845
+step     52/60 | loss 8.6619 | lr 1.35e-04 | gnorm 0.814 | 0.44s | 73.8k tok/s | mem 6.7GB
+step     54/60 | loss 8.5766 | lr 9.80e-05 | gnorm 2.119 | 0.42s | 78.7k tok/s | mem 6.7GB
+step     56/60 | loss 8.8518 | lr 6.33e-05 | gnorm 8.667 | 0.41s | 80.4k tok/s | mem 6.7GB
+step     58/60 | loss 7.8404 | lr 3.08e-05 | gnorm 0.725 | 0.41s | 80.3k tok/s | mem 6.7GB
+[eval FULL] step 60 | val_loss 8.4673 | val@16384 8.4670 | fineweb_edu/long:8.071, fineweb_edu/short:7.955, finepdfs_edu/long:8.315, books/long:7.736, code/long:9.431, code/short:9.658, math/short:8.105 (12s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/kda_full_s2_4k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.55
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▆█▁
+wandb:      diag/embed_update_ratio █▂▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm ██▁
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁██
+wandb:          diag/logit_lse_mean █▃▁
+wandb:               diag/logit_max █▁▁
+wandb:               diag/logit_min ▁▄█
+wandb:               diag/logit_std █▅▁
+wandb:                         +313 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.54757
+wandb:      diag/embed_update_ratio 0.00018
+wandb:       diag/embed_weight_norm 151.58542
+wandb:    diag/final_norm_grad_norm 0.01985
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.28783
+wandb:          diag/logit_lse_mean 9.88925
+wandb:               diag/logit_max 6.90318
+wandb:               diag/logit_min -5.94399
+wandb:               diag/logit_std 1.29199
+wandb:                         +346 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/kda_full_s2_4k_smoke/wandb/offline-run-20260926_011543-l1uegd0x
+wandb: Find logs at: ./runs_smoke/kda_full_s2_4k_smoke/wandb/offline-run-20260926_011543-l1uegd0x/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== kda_full / s2_4k: exit 0 in 40s
+
+=== kda_dsa / trunk ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch kda_dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch kda_dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id r5lxbu8a.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/wandb/offline-run-20260926_011623-r5lxbu8a
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=trunk_smoke
+[event][rank0] start fresh=True stage=trunk
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] kda_dsa trunk pattern=KKKSKKKSKKKS params=42.9M (non-emb 10.1M) world=1 rows/step=4x4096 micro=2 accum=2 steps 0->40 {'kda_backend': 'fla', 'kda_backend_reason': 'varlen self-check ok (rel err 4.27e-03/5.41e-03)', 'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=0 max_steps=40 data_index=0 world_size=1 micro_batch_size=2 grad_accum=2
+step      0/40 | loss 11.7940 | lr 1.20e-04 | gnorm 7.349 | 1.13s | 14.5k tok/s | mem 7.9GB | idxKL 0.003 (dense warm-up)
+step      2/40 | loss 11.7453 | lr 3.60e-04 | gnorm 3.623 | 0.25s | 65.3k tok/s | mem 8.2GB | idxKL 0.003 (dense warm-up)
+step      4/40 | loss 11.3865 | lr 6.00e-04 | gnorm 2.191 | 0.25s | 65.1k tok/s | mem 8.2GB | idxKL 0.002 (dense warm-up)
+step      6/40 | loss 11.0439 | lr 6.00e-04 | gnorm 1.533 | 0.25s | 65.2k tok/s | mem 8.2GB | idxKL 0.002 (dense warm-up)
+step      8/40 | loss 10.8374 | lr 6.00e-04 | gnorm 1.329 | 0.25s | 65.1k tok/s | mem 8.2GB | idxKL 0.003 (dense warm-up)
+[event][rank0] checkpoint step=10 path=/workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/checkpoints/step_0000010 healthy=True seconds=0.56
+step     10/40 | loss 10.4765 | lr 6.00e-04 | gnorm 1.458 | 0.26s | 64.0k tok/s | mem 8.2GB | idxKL 0.002
+step     12/40 | loss 10.3824 | lr 6.00e-04 | gnorm 1.204 | 0.25s | 65.8k tok/s | mem 8.2GB | idxKL 0.002
+step     14/40 | loss 9.8791 | lr 6.00e-04 | gnorm 1.357 | 0.25s | 65.3k tok/s | mem 8.2GB | idxKL 0.002
+step     16/40 | loss 9.9963 | lr 6.00e-04 | gnorm 1.077 | 0.25s | 65.4k tok/s | mem 8.2GB | idxKL 0.002
+step     18/40 | loss 9.2461 | lr 6.00e-04 | gnorm 1.878 | 0.25s | 65.3k tok/s | mem 8.2GB | idxKL 0.003
+[eval] step 20 | val_loss 9.5494 | dense-attn 9.5494 | fineweb_edu/long:9.004, fineweb_edu/short:9.132, finepdfs_edu/long:9.392, books/long:8.988, code/long:10.548, code/short:10.449, math/short:9.332 (5s)
+[event][rank0] checkpoint step=20 path=/workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/checkpoints/step_0000020 healthy=True seconds=0.55
+step     20/40 | loss 9.0889 | lr 6.00e-04 | gnorm 1.293 | 0.26s | 63.8k tok/s | mem 8.2GB | idxKL 0.003
+step     22/40 | loss 9.2215 | lr 6.00e-04 | gnorm 1.269 | 0.25s | 65.2k tok/s | mem 8.2GB | idxKL 0.003
+step     24/40 | loss 8.6484 | lr 6.00e-04 | gnorm 1.182 | 0.25s | 65.1k tok/s | mem 8.2GB | idxKL 0.003
+step     26/40 | loss 9.1721 | lr 6.00e-04 | gnorm 1.034 | 0.26s | 62.5k tok/s | mem 8.2GB | idxKL 0.003
+step     28/40 | loss 8.3916 | lr 6.00e-04 | gnorm 1.062 | 0.26s | 63.5k tok/s | mem 8.2GB | idxKL 0.003
+[event][rank0] checkpoint step=30 path=/workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/checkpoints/step_0000030 healthy=True seconds=0.56
+[event][rank0] ratio_alert step=30 layer=embed group=embed state=high ratio=0.018461699687895034 message=embed/embed update ratio 1.85e-02 high for 3 consecutive checks (LR too high for this layer)
+step     30/40 | loss 8.3516 | lr 6.00e-04 | gnorm 1.073 | 0.26s | 63.2k tok/s | mem 8.2GB | idxKL 0.004
+step     32/40 | loss 8.1152 | lr 6.00e-04 | gnorm 0.944 | 0.26s | 63.7k tok/s | mem 8.2GB | idxKL 0.004
+step     34/40 | loss 8.1474 | lr 6.00e-04 | gnorm 0.700 | 0.25s | 64.4k tok/s | mem 8.2GB | idxKL 0.004
+step     36/40 | loss 8.4644 | lr 6.00e-04 | gnorm 0.518 | 0.27s | 60.9k tok/s | mem 8.2GB | idxKL 0.004
+step     38/40 | loss 8.8666 | lr 6.00e-04 | gnorm 1.209 | 0.26s | 63.5k tok/s | mem 8.2GB | idxKL 0.004
+[eval FULL] step 40 | val_loss 8.5916 | dense-attn 8.5912 | fineweb_edu/long:8.057, fineweb_edu/short:7.910, finepdfs_edu/long:8.414, books/long:7.877, code/long:9.733, code/short:10.002, math/short:8.147 (19s)
+[event][rank0] checkpoint step=40 path=/workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/checkpoints/step_0000040_final healthy=True seconds=0.55
+[event][rank0] train_end step=40 tokens_seen=655360 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=40
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁███▇
+wandb:      diag/embed_update_ratio ▁██▆▄
+wandb:       diag/embed_weight_norm ▁▁▃▆█
+wandb:    diag/final_norm_grad_norm ▁▅█▇▃
+wandb: diag/final_norm_update_ratio ▁▆██▅
+wandb:  diag/final_norm_weight_norm ▁▁▃▆█
+wandb:          diag/logit_lse_mean █▅▂▁▁
+wandb:               diag/logit_max ▁▂▄▆█
+wandb:               diag/logit_min █▇▅▃▁
+wandb:               diag/logit_std ▁▂▄▇█
+wandb:                         +357 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.90696
+wandb:      diag/embed_update_ratio 0.01261
+wandb:       diag/embed_weight_norm 144.56509
+wandb:    diag/final_norm_grad_norm 0.03077
+wandb: diag/final_norm_update_ratio 0.00036
+wandb:  diag/final_norm_weight_norm 16.26375
+wandb:          diag/logit_lse_mean 10.12846
+wandb:               diag/logit_max 6.98771
+wandb:               diag/logit_min -5.95194
+wandb:               diag/logit_std 1.3684
+wandb:                         +377 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/wandb/offline-run-20260926_011623-r5lxbu8a
+wandb: Find logs at: ./runs_smoke/kda_dsa_trunk_smoke/wandb/offline-run-20260926_011623-r5lxbu8a/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 40}
+=== kda_dsa / trunk: exit 0 in 50s
+
+=== kda_dsa / s2_16k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/kda_dsa_s2_16k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch kda_dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch kda_dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id dqyvk1er.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/kda_dsa_s2_16k_smoke/wandb/offline-run-20260926_011713-dqyvk1er
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/kda_dsa_s2_16k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_16k_smoke
+[event][rank0] branch_init step=40 stage=s2_16k branch_from=/workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=215 optimizer_params=215 stage_start_step=40 branch_stage=trunk branch_config_arch=kda_dsa
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] kda_dsa s2_16k pattern=KKKSKKKSKKKS params=42.9M (non-emb 10.1M) world=1 rows/step=2x16384 micro=1 accum=2 steps 40->60 {'kda_backend': 'fla', 'kda_backend_reason': 'varlen self-check ok (rel err 4.27e-03/5.41e-03)', 'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=1 grad_accum=2
+step     40/60 | loss 9.0093 | lr 6.00e-04 | gnorm 0.866 | 1.99s | 16.5k tok/s | mem 11.2GB | idxKL 0.004
+step     42/60 | loss 8.4066 | lr 4.10e-04 | gnorm 0.914 | 1.03s | 31.9k tok/s | mem 11.2GB | idxKL 0.005
+step     44/60 | loss 8.3757 | lr 3.32e-04 | gnorm 398.983 | 1.03s | 31.7k tok/s | mem 11.2GB | idxKL 0.007
+step     46/60 | loss 7.8701 | lr 2.71e-04 | gnorm 0.495 | 1.07s | 30.5k tok/s | mem 11.2GB | idxKL 0.004
+step     48/60 | loss 7.8750 | lr 2.21e-04 | gnorm 0.844 | 1.03s | 31.9k tok/s | mem 11.2GB | idxKL 0.004
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/kda_dsa_s2_16k_smoke/checkpoints/step_0000050 healthy=True seconds=0.55
+step     50/60 | loss 9.0587 | lr 1.76e-04 | gnorm 1.002 | 1.03s | 31.7k tok/s | mem 11.2GB | idxKL 0.004
+step     52/60 | loss 8.6727 | lr 1.35e-04 | gnorm 0.682 | 1.03s | 31.9k tok/s | mem 11.2GB | idxKL 0.004
+step     54/60 | loss 8.6008 | lr 9.80e-05 | gnorm 2.116 | 1.06s | 31.0k tok/s | mem 11.2GB | idxKL 0.004
+step     56/60 | loss 8.9172 | lr 6.33e-05 | gnorm 1.855 | 1.04s | 31.5k tok/s | mem 11.2GB | idxKL 0.004
+step     58/60 | loss 7.8666 | lr 3.08e-05 | gnorm 0.887 | 1.03s | 31.9k tok/s | mem 11.2GB | idxKL 0.004
+[eval FULL] step 60 | val_loss 8.4893 | dense-attn 8.4874 | val@4096 8.4843 | fineweb_edu/long:8.082, fineweb_edu/short:7.955, finepdfs_edu/long:8.352, books/long:7.771, code/long:9.460, code/short:9.690, math/short:8.114 (19s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/kda_dsa_s2_16k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.57
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁█▇
+wandb:      diag/embed_update_ratio █▂▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm ██▁
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁██
+wandb:          diag/logit_lse_mean █▄▁
+wandb:               diag/logit_max ██▁
+wandb:               diag/logit_min ▁▄█
+wandb:               diag/logit_std █▆▁
+wandb:                         +353 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.94509
+wandb:      diag/embed_update_ratio 0.00022
+wandb:       diag/embed_weight_norm 151.32826
+wandb:    diag/final_norm_grad_norm 0.04771
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.28453
+wandb:          diag/logit_lse_mean 9.9249
+wandb:               diag/logit_max 6.87281
+wandb:               diag/logit_min -5.80514
+wandb:               diag/logit_std 1.30229
+wandb:                         +388 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/kda_dsa_s2_16k_smoke/wandb/offline-run-20260926_011713-dqyvk1er
+wandb: Find logs at: ./runs_smoke/kda_dsa_s2_16k_smoke/wandb/offline-run-20260926_011713-dqyvk1er/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== kda_dsa / s2_16k: exit 0 in 60s
+
+=== kda_dsa / s2_4k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/kda_dsa_s2_4k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch kda_dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch kda_dsa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id coyj61k7.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/kda_dsa_s2_4k_smoke/wandb/offline-run-20260926_011813-coyj61k7
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/kda_dsa_s2_4k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_4k_smoke
+[event][rank0] branch_init step=40 stage=s2_4k branch_from=/workspace/model_setting/runs_smoke/kda_dsa_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=215 optimizer_params=215 stage_start_step=40 branch_stage=trunk branch_config_arch=kda_dsa
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] kda_dsa s2_4k pattern=KKKSKKKSKKKS params=42.9M (non-emb 10.1M) world=1 rows/step=8x4096 micro=2 accum=4 steps 40->60 {'kda_backend': 'fla', 'kda_backend_reason': 'varlen self-check ok (rel err 4.27e-03/5.41e-03)', 'attn_backend': 'sdpa_mask'}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=2 grad_accum=4
+step     40/60 | loss 9.0099 | lr 6.00e-04 | gnorm 1.004 | 1.49s | 22.0k tok/s | mem 8.2GB | idxKL 0.008
+step     42/60 | loss 8.4071 | lr 4.10e-04 | gnorm 0.903 | 0.49s | 66.5k tok/s | mem 8.2GB | idxKL 0.003
+step     44/60 | loss 7.7388 | lr 3.32e-04 | gnorm 0.606 | 0.49s | 66.2k tok/s | mem 8.2GB | idxKL 0.003
+step     46/60 | loss 7.8707 | lr 2.71e-04 | gnorm 0.539 | 0.50s | 66.1k tok/s | mem 8.2GB | idxKL 0.003
+step     48/60 | loss 7.8674 | lr 2.21e-04 | gnorm 0.854 | 0.50s | 66.1k tok/s | mem 8.2GB | idxKL 0.003
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/kda_dsa_s2_4k_smoke/checkpoints/step_0000050 healthy=True seconds=0.57
+step     50/60 | loss 9.0450 | lr 1.76e-04 | gnorm 0.970 | 0.50s | 65.2k tok/s | mem 8.2GB | idxKL 0.003
+step     52/60 | loss 8.6571 | lr 1.35e-04 | gnorm 0.656 | 0.49s | 66.3k tok/s | mem 8.2GB | idxKL 0.003
+step     54/60 | loss 8.6015 | lr 9.80e-05 | gnorm 2.242 | 0.50s | 66.0k tok/s | mem 8.2GB | idxKL 0.003
+[event][rank0] guard step=55 action=ok loss=9.333694864163615 grad_norm=47.32465362548828
+step     55/60 | loss 9.3337 | lr 8.04e-05 | gnorm 47.325 | 0.50s | 65.9k tok/s | mem 8.2GB | idxKL 0.003 | OK grad_norm_spike gn=47.325 ema=0.996
+[event][rank0] guard step=56 action=ok loss=9.2551515758547 grad_norm=24.55864143371582
+step     56/60 | loss 9.2552 | lr 6.33e-05 | gnorm 24.559 | 0.50s | 65.8k tok/s | mem 8.2GB | idxKL 0.003 | OK grad_norm_spike gn=24.559 ema=1.922
+step     58/60 | loss 7.8492 | lr 3.08e-05 | gnorm 0.899 | 0.49s | 66.5k tok/s | mem 8.2GB | idxKL 0.003
+[eval FULL] step 60 | val_loss 8.4773 | dense-attn 8.4645 | val@16384 8.4832 | fineweb_edu/long:8.077, fineweb_edu/short:7.960, finepdfs_edu/long:8.348, books/long:7.752, code/long:9.427, code/short:9.658, math/short:8.118 (24s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/kda_dsa_s2_4k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.55
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▆█▁
+wandb:      diag/embed_update_ratio █▂▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm █▆▁
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁██
+wandb:          diag/logit_lse_mean █▃▁
+wandb:               diag/logit_max █▄▁
+wandb:               diag/logit_min ▁▅█
+wandb:               diag/logit_std █▅▁
+wandb:                         +354 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.60886
+wandb:      diag/embed_update_ratio 0.0002
+wandb:       diag/embed_weight_norm 151.51628
+wandb:    diag/final_norm_grad_norm 0.01897
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.28487
+wandb:          diag/logit_lse_mean 9.90259
+wandb:               diag/logit_max 6.9123
+wandb:               diag/logit_min -5.81723
+wandb:               diag/logit_std 1.28377
+wandb:                         +389 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/kda_dsa_s2_4k_smoke/wandb/offline-run-20260926_011813-coyj61k7
+wandb: Find logs at: ./runs_smoke/kda_dsa_s2_4k_smoke/wandb/offline-run-20260926_011813-coyj61k7/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== kda_dsa / s2_4k: exit 0 in 50s
+
+=== csa / trunk ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/csa_trunk_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch csa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/trunk.yaml --arch csa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id nn5qx70d.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/csa_trunk_smoke/wandb/offline-run-20260926_011903-nn5qx70d
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/csa_trunk_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=trunk_smoke
+[event][rank0] start fresh=True stage=trunk
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] csa trunk pattern=CCCCCCCCCCCC params=43.1M (non-emb 10.3M) world=1 rows/step=4x4096 micro=2 accum=2 steps 0->40 {}
+[event][rank0] train_begin start_step=0 max_steps=40 data_index=0 world_size=1 micro_batch_size=2 grad_accum=2
+step      0/40 | loss 11.8120 | lr 1.20e-04 | gnorm 15.936 | 2.61s | 6.3k tok/s | mem 7.9GB | idxKL 0.075 (dense warm-up)
+step      2/40 | loss 11.5960 | lr 3.60e-04 | gnorm 7.419 | 0.27s | 60.7k tok/s | mem 8.3GB | idxKL 0.073 (dense warm-up)
+step      4/40 | loss 11.2941 | lr 6.00e-04 | gnorm 2.232 | 0.31s | 52.1k tok/s | mem 8.3GB | idxKL 0.054 (dense warm-up)
+step      6/40 | loss 10.9588 | lr 6.00e-04 | gnorm 1.704 | 0.27s | 60.6k tok/s | mem 8.3GB | idxKL 0.051 (dense warm-up)
+step      8/40 | loss 10.7235 | lr 6.00e-04 | gnorm 1.769 | 0.27s | 61.0k tok/s | mem 8.3GB | idxKL 0.060 (dense warm-up)
+[event][rank0] checkpoint step=10 path=/workspace/model_setting/runs_smoke/csa_trunk_smoke/checkpoints/step_0000010 healthy=True seconds=0.56
+step     10/40 | loss 10.3392 | lr 6.00e-04 | gnorm 1.631 | 0.41s | 40.3k tok/s | mem 8.3GB | idxKL 0.049
+step     12/40 | loss 10.2541 | lr 6.00e-04 | gnorm 1.446 | 0.27s | 60.7k tok/s | mem 8.3GB | idxKL 0.051
+step     14/40 | loss 9.7250 | lr 6.00e-04 | gnorm 1.684 | 0.27s | 60.9k tok/s | mem 8.3GB | idxKL 0.042
+step     16/40 | loss 9.9113 | lr 6.00e-04 | gnorm 1.843 | 0.27s | 60.6k tok/s | mem 8.3GB | idxKL 0.044
+step     18/40 | loss 9.1748 | lr 6.00e-04 | gnorm 2.208 | 0.27s | 61.0k tok/s | mem 8.3GB | idxKL 0.034
+[eval] step 20 | val_loss 9.4809 | dense-attn 9.4822 | fineweb_edu/long:8.895, fineweb_edu/short:9.045, finepdfs_edu/long:9.349, books/long:8.856, code/long:10.514, code/short:10.458, math/short:9.249 (5s)
+[event][rank0] checkpoint step=20 path=/workspace/model_setting/runs_smoke/csa_trunk_smoke/checkpoints/step_0000020 healthy=True seconds=0.55
+step     20/40 | loss 8.9865 | lr 6.00e-04 | gnorm 1.487 | 0.28s | 59.5k tok/s | mem 8.3GB | idxKL 0.029
+step     22/40 | loss 9.1502 | lr 6.00e-04 | gnorm 1.381 | 0.27s | 60.6k tok/s | mem 8.3GB | idxKL 0.029
+step     24/40 | loss 8.5819 | lr 6.00e-04 | gnorm 1.371 | 0.27s | 60.5k tok/s | mem 8.3GB | idxKL 0.027
+step     26/40 | loss 9.1303 | lr 6.00e-04 | gnorm 1.131 | 0.27s | 60.4k tok/s | mem 8.3GB | idxKL 0.030
+step     28/40 | loss 8.3407 | lr 6.00e-04 | gnorm 1.218 | 0.28s | 59.6k tok/s | mem 8.3GB | idxKL 0.028
+[event][rank0] checkpoint step=30 path=/workspace/model_setting/runs_smoke/csa_trunk_smoke/checkpoints/step_0000030 healthy=True seconds=0.56
+[event][rank0] ratio_alert step=30 layer=embed group=embed state=high ratio=0.018633159094628905 message=embed/embed update ratio 1.86e-02 high for 3 consecutive checks (LR too high for this layer)
+step     30/40 | loss 8.3188 | lr 6.00e-04 | gnorm 1.367 | 0.28s | 58.6k tok/s | mem 8.3GB | idxKL 0.035
+step     32/40 | loss 8.0933 | lr 6.00e-04 | gnorm 1.321 | 0.30s | 54.8k tok/s | mem 8.3GB | idxKL 0.038
+step     34/40 | loss 8.1367 | lr 6.00e-04 | gnorm 1.143 | 0.27s | 60.0k tok/s | mem 8.3GB | idxKL 0.033
+step     36/40 | loss 8.4359 | lr 6.00e-04 | gnorm 1.620 | 0.27s | 60.2k tok/s | mem 8.3GB | idxKL 0.062
+step     38/40 | loss 8.7552 | lr 6.00e-04 | gnorm 2.046 | 0.29s | 55.9k tok/s | mem 8.3GB | idxKL 0.052
+[eval FULL] step 40 | val_loss 8.4877 | dense-attn 8.5138 | fineweb_edu/long:8.060, fineweb_edu/short:7.930, finepdfs_edu/long:8.367, books/long:7.866, code/long:9.424, code/short:9.675, math/short:8.092 (21s)
+[event][rank0] checkpoint step=40 path=/workspace/model_setting/runs_smoke/csa_trunk_smoke/checkpoints/step_0000040_final healthy=True seconds=0.59
+[event][rank0] train_end step=40 tokens_seen=655360 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=40
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁██▇▆
+wandb:      diag/embed_update_ratio ▁██▆▄
+wandb:       diag/embed_weight_norm ▁▁▃▆█
+wandb:    diag/final_norm_grad_norm ▁▆█▆▂
+wandb: diag/final_norm_update_ratio ▁▆██▅
+wandb:  diag/final_norm_weight_norm ▁▂▄▆█
+wandb:          diag/logit_lse_mean █▅▂▁▁
+wandb:               diag/logit_max ▁▃▅▇█
+wandb:               diag/logit_min █▅▅▂▁
+wandb:               diag/logit_std ▁▂▅▇█
+wandb:                         +285 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.62759
+wandb:      diag/embed_update_ratio 0.01232
+wandb:       diag/embed_weight_norm 145.16133
+wandb:    diag/final_norm_grad_norm 0.01176
+wandb: diag/final_norm_update_ratio 0.0004
+wandb:  diag/final_norm_weight_norm 16.28481
+wandb:          diag/logit_lse_mean 10.04327
+wandb:               diag/logit_max 7.0556
+wandb:               diag/logit_min -5.61541
+wandb:               diag/logit_std 1.28571
+wandb:                         +305 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/csa_trunk_smoke/wandb/offline-run-20260926_011903-nn5qx70d
+wandb: Find logs at: ./runs_smoke/csa_trunk_smoke/wandb/offline-run-20260926_011903-nn5qx70d/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 40}
+=== csa / trunk: exit 0 in 60s
+
+=== csa / s2_16k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/csa_s2_16k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch csa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_16k.yaml --arch csa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id 1evy9mwc.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/csa_s2_16k_smoke/wandb/offline-run-20260926_012003-1evy9mwc
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/csa_s2_16k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_16k_smoke
+[event][rank0] branch_init step=40 stage=s2_16k branch_from=/workspace/model_setting/runs_smoke/csa_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=230 optimizer_params=230 stage_start_step=40 branch_stage=trunk branch_config_arch=csa
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] csa s2_16k pattern=CCCCCCCCCCCC params=43.1M (non-emb 10.3M) world=1 rows/step=2x16384 micro=1 accum=2 steps 40->60 {}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=1 grad_accum=2
+step     40/60 | loss 8.8632 | lr 6.00e-04 | gnorm 2.596 | 2.46s | 13.3k tok/s | mem 6.6GB | idxKL 0.061
+step     42/60 | loss 8.3554 | lr 4.10e-04 | gnorm 1.136 | 1.49s | 21.9k tok/s | mem 6.6GB | idxKL 0.043
+step     44/60 | loss 7.7403 | lr 3.32e-04 | gnorm 1.640 | 1.49s | 21.9k tok/s | mem 6.6GB | idxKL 0.043
+step     46/60 | loss 7.8674 | lr 2.71e-04 | gnorm 3.032 | 1.49s | 21.9k tok/s | mem 6.6GB | idxKL 0.044
+step     48/60 | loss 7.8725 | lr 2.21e-04 | gnorm 4.062 | 1.49s | 21.9k tok/s | mem 6.6GB | idxKL 0.045
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/csa_s2_16k_smoke/checkpoints/step_0000050 healthy=True seconds=0.56
+step     50/60 | loss 8.9692 | lr 1.76e-04 | gnorm 1.637 | 1.50s | 21.8k tok/s | mem 6.6GB | idxKL 0.065
+step     52/60 | loss 8.6059 | lr 1.35e-04 | gnorm 0.960 | 1.49s | 21.9k tok/s | mem 6.6GB | idxKL 0.045
+step     54/60 | loss 8.5304 | lr 9.80e-05 | gnorm 2.583 | 1.49s | 21.9k tok/s | mem 6.6GB | idxKL 0.059
+step     56/60 | loss 8.8511 | lr 6.33e-05 | gnorm 1.999 | 1.49s | 21.9k tok/s | mem 6.6GB | idxKL 0.039
+step     58/60 | loss 7.8420 | lr 3.08e-05 | gnorm 1.598 | 1.56s | 21.1k tok/s | mem 6.6GB | idxKL 0.043
+[eval FULL] step 60 | val_loss 8.4100 | dense-attn 8.4265 | val@4096 8.4085 | fineweb_edu/long:8.051, fineweb_edu/short:7.939, finepdfs_edu/long:8.300, books/long:7.731, code/long:9.276, code/short:9.499, math/short:8.074 (31s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/csa_s2_16k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.56
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm ▁▅█
+wandb:      diag/embed_update_ratio █▂▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm ▁██
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁██
+wandb:          diag/logit_lse_mean ▁█▂
+wandb:               diag/logit_max ▁█▄
+wandb:               diag/logit_min █▁▁
+wandb:               diag/logit_std ▁█▆
+wandb:                         +281 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.81708
+wandb:      diag/embed_update_ratio 0.00023
+wandb:       diag/embed_weight_norm 151.95999
+wandb:    diag/final_norm_grad_norm 0.02459
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.3211
+wandb:          diag/logit_lse_mean 10.03653
+wandb:               diag/logit_max 7.19756
+wandb:               diag/logit_min -5.92171
+wandb:               diag/logit_std 1.35431
+wandb:                         +316 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/csa_s2_16k_smoke/wandb/offline-run-20260926_012003-1evy9mwc
+wandb: Find logs at: ./runs_smoke/csa_s2_16k_smoke/wandb/offline-run-20260926_012003-1evy9mwc/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== csa / s2_16k: exit 0 in 80s
+
+=== csa / s2_4k ===
+/usr/bin/python /workspace/model_setting/scripts/supervise.py --run_dir /workspace/model_setting/runs_smoke/csa_s2_4k_smoke --backoff_base 2 --heartbeat_timeout 900 -- /usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch csa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline
+[supervisor] launch {'attempt': 0, 'cmd': '/usr/bin/python /workspace/model_setting/scripts/train.py --config /workspace/model_setting/configs/smoke/s2_4k.yaml --arch csa --set log.out_dir=/workspace/model_setting/runs_smoke --set log.wandb_mode=offline --resume auto'}
+wandb: WARNING `resume` will be ignored since W&B syncing is set to `offline`. Starting a new run with run id c6oz0jrj.
+wandb: Tracking run with wandb version 0.30.0
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /workspace/model_setting/runs_smoke/csa_s2_4k_smoke/wandb/offline-run-20260926_012123-c6oz0jrj
+wandb: View this run in the terminal with `wandb leet`
+wandb: WARNING URL not available in offline run
+[wandb] offline: /workspace/model_setting/runs_smoke/csa_s2_4k_smoke/wandb
+wandb: WARNING URL not available in offline run
+[event][rank0] wandb mode=offline url=None group=s2_4k_smoke
+[event][rank0] branch_init step=40 stage=s2_4k branch_from=/workspace/model_setting/runs_smoke/csa_trunk_smoke/checkpoints/step_0000040_final optimizer_state_copied=230 optimizer_params=230 stage_start_step=40 branch_stage=trunk branch_config_arch=csa
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+[lmarch] csa s2_4k pattern=CCCCCCCCCCCC params=43.1M (non-emb 10.3M) world=1 rows/step=8x4096 micro=2 accum=4 steps 40->60 {}
+[event][rank0] train_begin start_step=40 max_steps=60 data_index=0 world_size=1 micro_batch_size=2 grad_accum=4
+step     40/60 | loss 8.8630 | lr 6.00e-04 | gnorm 1.705 | 1.56s | 21.0k tok/s | mem 8.3GB | idxKL 0.051
+step     42/60 | loss 8.3567 | lr 4.10e-04 | gnorm 1.231 | 0.52s | 62.8k tok/s | mem 8.3GB | idxKL 0.041
+step     44/60 | loss 7.7351 | lr 3.32e-04 | gnorm 2.499 | 0.53s | 62.4k tok/s | mem 8.3GB | idxKL 0.036
+step     46/60 | loss 7.8653 | lr 2.71e-04 | gnorm 2.567 | 0.52s | 62.5k tok/s | mem 8.3GB | idxKL 0.037
+step     48/60 | loss 7.8676 | lr 2.21e-04 | gnorm 5.129 | 0.52s | 62.8k tok/s | mem 8.3GB | idxKL 0.041
+[event][rank0] checkpoint step=50 path=/workspace/model_setting/runs_smoke/csa_s2_4k_smoke/checkpoints/step_0000050 healthy=True seconds=0.57
+step     50/60 | loss 8.9660 | lr 1.76e-04 | gnorm 1.956 | 0.53s | 61.7k tok/s | mem 8.3GB | idxKL 0.074
+step     52/60 | loss 8.6074 | lr 1.35e-04 | gnorm 1.160 | 0.52s | 62.9k tok/s | mem 8.3GB | idxKL 0.054
+step     54/60 | loss 8.5080 | lr 9.80e-05 | gnorm 2.423 | 0.52s | 63.1k tok/s | mem 8.3GB | idxKL 0.068
+step     56/60 | loss 8.8607 | lr 6.33e-05 | gnorm 2.009 | 0.54s | 61.0k tok/s | mem 8.3GB | idxKL 0.044
+step     58/60 | loss 7.8384 | lr 3.08e-05 | gnorm 1.407 | 0.52s | 62.8k tok/s | mem 8.3GB | idxKL 0.037
+[eval FULL] step 60 | val_loss 8.4104 | dense-attn 8.4152 | val@16384 8.4124 | fineweb_edu/long:8.051, fineweb_edu/short:7.941, finepdfs_edu/long:8.301, books/long:7.736, code/long:9.274, code/short:9.499, math/short:8.069 (31s)
+[event][rank0] checkpoint step=60 path=/workspace/model_setting/runs_smoke/csa_s2_4k_smoke/checkpoints/step_0000060_final healthy=True seconds=0.56
+[event][rank0] train_end step=60 tokens_seen=1310720 n_rollbacks=0 n_skipped=0
+[event][rank0] exit code=0 reason=completed step=60
+wandb: 
+wandb: Run history:
+wandb:         diag/embed_grad_norm █▅▁
+wandb:      diag/embed_update_ratio █▂▁
+wandb:       diag/embed_weight_norm ▁▇█
+wandb:    diag/final_norm_grad_norm ▂█▁
+wandb: diag/final_norm_update_ratio █▂▁
+wandb:  diag/final_norm_weight_norm ▁██
+wandb:          diag/logit_lse_mean █▆▁
+wandb:               diag/logit_max ▁█▅
+wandb:               diag/logit_min █▁▁
+wandb:               diag/logit_std ▁█▅
+wandb:                         +281 ...
+wandb: 
+wandb: Run summary:
+wandb:         diag/embed_grad_norm 0.40794
+wandb:      diag/embed_update_ratio 0.0002
+wandb:       diag/embed_weight_norm 151.8645
+wandb:    diag/final_norm_grad_norm 0.00842
+wandb: diag/final_norm_update_ratio 0.0
+wandb:  diag/final_norm_weight_norm 16.3215
+wandb:          diag/logit_lse_mean 9.93782
+wandb:               diag/logit_max 7.22332
+wandb:               diag/logit_min -5.92708
+wandb:               diag/logit_std 1.29632
+wandb:                         +316 ...
+wandb: 
+wandb: You can sync this run to the cloud by running:
+wandb: wandb sync /workspace/model_setting/runs_smoke/csa_s2_4k_smoke/wandb/offline-run-20260926_012123-c6oz0jrj
+wandb: Find logs at: ./runs_smoke/csa_s2_4k_smoke/wandb/offline-run-20260926_012123-c6oz0jrj/logs
+[supervisor] exited {'returncode': 0, 'code': 0, 'reason': 'completed', 'step': 60}
+=== csa / s2_4k: exit 0 in 60s
+                  run     arch  stage      pattern  params_M  non_emb_M  steps  tokens_B  train_loss_last50  tok_per_s_median  tok_per_s_per_gpu_median  peak_mem_gb_max  nonfinite_steps  skipped_steps  spikes  grad_norm_median  val_loss_final  val_final_is_full  val_loss_best_periodic  val_by_group.fineweb_edu/long  val_by_group.fineweb_edu/short  val_by_group.finepdfs_edu/long  val_by_group.books/long  val_by_group.code/long  val_by_group.code/short  val_by_group.math/short  val_by_pos.0-64  val_by_pos.64-256  val_by_pos.256-1024  val_by_pos.1024-4096  rollbacks  ratio_alerts  restarts  orphaned_step_records  val_by_pos.4096-8192  val_by_pos.8192-16384  val_loss@4096  val_by_group@4096.fineweb_edu/long  val_by_group@4096.fineweb_edu/short  val_by_group@4096.finepdfs_edu/long  val_by_group@4096.books/long  val_by_group@4096.code/long  val_by_group@4096.code/short  val_by_group@4096.math/short  val_by_pos@4096.0-64  val_by_pos@4096.64-256  val_by_pos@4096.256-1024  val_by_pos@4096.1024-4096  val_loss@16384  val_by_group@16384.fineweb_edu/long  val_by_group@16384.fineweb_edu/short  val_by_group@16384.finepdfs_edu/long  val_by_group@16384.books/long  val_by_group@16384.code/long  val_by_group@16384.code/short  val_by_group@16384.math/short  val_by_pos@16384.0-64  val_by_pos@16384.64-256  val_by_pos@16384.256-1024  val_by_pos@16384.1024-4096  val_by_pos@16384.4096-8192  val_by_pos@16384.8192-16384  sparse_minus_dense
+    dense_trunk_smoke    dense  trunk FFFFFFFFFFFF 42.473728   9.640192     40  0.000655           9.604375     151228.440692             151228.440692         5.951351                0              0       0          1.277682        8.510730               True                8.510730                       8.042780                        7.899006                        8.366262                 7.868353                9.520603                 9.736950                 8.140446         8.344996           8.335502             8.354589              8.603589          0             1         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN                 NaN
+   dense_s2_16k_smoke    dense s2_16k FFFFFFFFFFFF 42.473728   9.640192     60  0.001311           8.461100      99591.907759              99591.907759         4.309906                0              0       0          0.903702        8.391916               True                8.391916                       8.020297                        7.897811                        8.277281                 7.681219                9.287342                 9.497145                 8.081943         8.313519           8.267385             8.227319              8.616258          0             0         0                      0              8.294701               8.317665       8.392557                            8.014844                             7.898109                             8.285459                      7.679180                     9.292327                      9.497145                      8.080255              8.263341                8.246919                  8.263043                   8.469268             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN                 NaN
+    dense_s2_4k_smoke    dense  s2_4k FFFFFFFFFFFF 42.473728   9.640192     60  0.001311           8.447923     156868.383195             156868.383195         5.991757                0              0       0          0.840467        8.389360               True                8.389360                       8.013842                        7.895165                        8.278936                 7.666993                9.298487                 9.495235                 8.076280         8.270916           8.244761             8.260019              8.465418          0             0         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN        8.389223                             8.016692                              7.894977                              8.278351                       7.667759                      9.292086                       9.495236                       8.079085               8.324718                 8.266029                   8.223994                    8.613536                    8.292210                     8.314212                 NaN
+      dsa_trunk_smoke      dsa  trunk SSSSSSSSSSSS 42.775552   9.942016     40  0.000655           9.617829      54894.896615              54894.896615        11.751451                0              0       0          1.333119        8.570806               True                8.570806                       8.055397                        7.917001                        8.388445                 7.882662                9.684372                 9.952315                 8.114668         8.358341           8.367869             8.397076              8.676278          0             1         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN           -0.000105
+     dsa_s2_16k_smoke      dsa s2_16k SSSSSSSSSSSS 42.775552   9.942016     60  0.001311           8.542399      12257.169217              12257.169217        11.229876                0              0       0          1.784897        8.526115               True                8.526115                       8.084391                        8.012300                        8.345702                 7.786821                9.445102                 9.774281                 8.233851         8.899650           8.440131             8.366144              8.771378          0             0         0                      0              8.387184               8.415815       8.527968                            8.086080                             8.010879                             8.337887                      7.788900                     9.461247                      9.774281                      8.235906              8.738394                8.400988                  8.385055                   8.593625             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN            0.028373
+      dsa_s2_4k_smoke      dsa  s2_4k SSSSSSSSSSSS 42.775552   9.942016     60  0.001311           8.516907      55355.099462              55355.099462        11.796863                0              0       0          1.210935        8.450238               True                8.450238                       8.067565                        7.957100                        8.319586                 7.724601                9.373900                 9.599605                 8.108724         8.301783           8.298263             8.318474              8.529462          0             0         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN        8.451235                             8.068361                              7.957691                              8.327411                       7.726908                      9.367563                       9.599605                       8.110729               8.351616                 8.320722                   8.284463                    8.682822                    8.353616                     8.372651            0.010504
+ kda_full_trunk_smoke kda_full  trunk KKKFKKKFKKKF 42.810724   9.977188     40  0.000655           9.717372      76701.868034              76701.868034         6.737143                0              0       0          1.259941        8.588608               True                8.588608                       8.063609                        7.915698                        8.397386                 7.868849                9.733599                 9.993180                 8.147137         8.369973           8.378213             8.411430              8.696673          0             1         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN                 NaN
+kda_full_s2_16k_smoke kda_full s2_16k KKKFKKKFKKKF 42.810724   9.977188     60  0.001311           8.613134      74131.534585              74131.534585         4.276953                0              0       0          0.868305        8.486700               True                8.486700                       8.077159                        7.958869                        8.318687                 7.739056                9.490284                 9.712622                 8.109811         8.361656           8.347949             8.307063              8.732644          0             0         0                      0              8.387349               8.403460       8.486404                            8.076609                             7.958878                             8.318657                      7.739210                     9.488855                      9.712622                      8.109364              8.315290                8.329235                  8.346319                   8.570656             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN                 NaN
+ kda_full_s2_4k_smoke kda_full  s2_4k KKKFKKKFKKKF 42.810724   9.977188     60  0.001311           8.616431      80100.512626              80100.512626         6.747528                0              0       1          0.867911        8.467256               True                8.467256                       8.070608                        7.954609                        8.314713                 7.736028                9.431042                 9.657803                 8.105372         8.311188           8.317302             8.331938              8.548024          0             0         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN        8.467041                             8.070996                              7.954663                              8.313860                       7.735846                      9.430046                       9.657803                       8.105678               8.357401                 8.334986                   8.294594                    8.705849                    8.367888                     8.385411                 NaN
+  kda_dsa_trunk_smoke  kda_dsa  trunk KKKSKKKSKKKS 42.886180  10.052644     40  0.000655           9.684375      65016.050628              65016.050628         8.182985                0              0       0          1.263042        8.591586               True                8.591586                       8.056783                        7.909810                        8.413883                 7.877319                9.732909                10.002141                 8.147450         8.372638           8.378445             8.412504              8.700785          0             1         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN            0.000363
+ kda_dsa_s2_16k_smoke  kda_dsa s2_16k KKKSKKKSKKKS 42.886180  10.052644     60  0.001311           8.594145      31818.421026              31818.421026        11.182881                0              0       0          0.994926        8.489307               True                8.489307                       8.081634                        7.955348                        8.352499                 7.770879                9.459701                 9.690216                 8.114454         8.362525           8.344983             8.302546              8.726165          0             0         0                      0              8.395887               8.418162       8.484341                            8.071972                             7.955136                             8.343635                      7.755303                     9.460495                      9.690216                      8.112993              8.317418                8.327266                  8.342453                   8.569149             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN            0.001898
+  kda_dsa_s2_4k_smoke  kda_dsa  s2_4k KKKSKKKSKKKS 42.886180  10.052644     60  0.001311           8.575537      65931.650729              65931.650729         8.195068                0              0       0          0.936360        8.477259               True                8.477259                       8.076695                        7.960260                        8.347735                 7.752111                9.427321                 9.658370                 8.117702         8.311989           8.309554             8.333440              8.564089          0             0         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN        8.483151                             8.082944                              7.960973                              8.351071                       7.760989                      9.445519                       9.658370                       8.121785               8.358567                 8.328055                   8.299130                    8.720218                    8.393748                     8.409635            0.012771
+      csa_trunk_smoke      csa  trunk CCCCCCCCCCCC 43.087408  10.253872     40  0.000655           9.607108      60451.062916              60451.062916         8.262771                0              0       0          1.586630        8.487724               True                8.487724                       8.059638                        7.929659                        8.367247                 7.865741                9.424160                 9.674889                 8.092063         8.335258           8.315752             8.337500              8.577181          0             1         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN           -0.026123
+     csa_s2_16k_smoke      csa s2_16k CCCCCCCCCCCC 43.087408  10.253872     60  0.001311           8.489689      21930.308748              21930.308748         6.592154                0              0       0          1.638904        8.409979               True                8.409979                       8.050528                        7.938754                        8.299747                 7.731171                9.276420                 9.499129                 8.073738         8.343234           8.292593             8.245666              8.625139          0             0         0                      0              8.315659               8.342309       8.408473                            8.047635                             7.938573                             8.296269                      7.729648                     9.274617                      9.499129                      8.072877              8.293806                8.272684                  8.281209                   8.482443             NaN                                  NaN                                   NaN                                   NaN                            NaN                           NaN                            NaN                            NaN                    NaN                      NaN                        NaN                         NaN                         NaN                          NaN           -0.016508
+      csa_s2_4k_smoke      csa  s2_4k CCCCCCCCCCCC 43.087408  10.253872     60  0.001311           8.487877      62430.030164              62430.030164         8.294971                0              0       0          2.120453        8.410393               True                8.410393                       8.051347                        7.940859                        8.301226                 7.735931                9.274090                 9.499365                 8.069368         8.289461           8.274332             8.282767              8.484810          0             0         0                      0                   NaN                    NaN            NaN                                 NaN                                  NaN                                  NaN                           NaN                          NaN                           NaN                           NaN                   NaN                     NaN                       NaN                        NaN        8.412361                             8.055100                              7.941246                              8.304800                       7.739014                      9.276115                       9.499365                       8.070513               8.337010                 8.293886                   8.245863                    8.626098                    8.320052                     8.347132           -0.004780
+wrote /workspace/model_setting/reports/smoke_smoke
+
+================ smoke summary ================
+OK  dense     trunk=0 s2_16k=0 s2_4k=0
+OK  dsa       trunk=0 s2_16k=0 s2_4k=0
+OK  kda_full  trunk=0 s2_16k=0 s2_4k=0
+OK  kda_dsa   trunk=0 s2_16k=0 s2_4k=0
+OK  csa       trunk=0 s2_16k=0 s2_4k=0

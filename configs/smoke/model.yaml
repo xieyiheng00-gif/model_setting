@@ -22,6 +22,7 @@ eval:
 diag:
   interval: 10
   probe_batch_size: 2
+  alert_start_step: 0               # exercise the alert path (an early embed 'high' alert is expected)
 checkpoint:
   interval: 10
   keep_last: 2

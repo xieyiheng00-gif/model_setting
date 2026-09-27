@@ -1,0 +1,74 @@
+{
+  "lmarch_version": "0.1.0",
+  "arch": "dense",
+  "pattern": "FFFFFFFFFFFF",
+  "stage": "trunk",
+  "layer_types": [
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax",
+    "softmax"
+  ],
+  "params": {
+    "total": 183454464,
+    "embedding": 98500608,
+    "non_embedding": 84953856,
+    "tied_embeddings": true,
+    "by_type": {
+      "softmax": {
+        "layers": 12,
+        "mixer": 28311552,
+        "indexer": 0,
+        "ffn": 56623104,
+        "norm": 18432
+      }
+    },
+    "pattern": "FFFFFFFFFFFF"
+  },
+  "runtime": {
+    "attn_backend": "sdpa_mask"
+  },
+  "world_size": 1,
+  "micro_batch_size": 4,
+  "grad_accum": 8,
+  "rows_per_step": 32,
+  "seq_len": 4096,
+  "tokens_per_step": 131072,
+  "stage_start_step": 0,
+  "max_steps": 30,
+  "stage_tokens_planned": 3932160,
+  "data": {
+    "packed_dir": "/workspace/model_setting/data/packed_smoke",
+    "stage": "trunk",
+    "view": "16k",
+    "steps_available": 64,
+    "doc_mask": true,
+    "max_rows_per_step": 0,
+    "holdout_groups": {
+      "finepdfs_edu/long": 8,
+      "fineweb_edu/short": 8,
+      "code/short": 8,
+      "books/long": 8,
+      "math/short": 8,
+      "fineweb_edu/long": 8,
+      "code/long": 8
+    }
+  },
+  "env": {
+    "torch": "2.12.0+cu130",
+    "cuda": "13.0",
+    "device": "NVIDIA H100 80GB HBM3",
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.39",
+    "host": "9ad1204c85f4"
+  },
+  "updated": "2026-09-26 01:22:51"
+}

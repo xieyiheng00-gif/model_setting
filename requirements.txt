@@ -5,13 +5,15 @@ pyarrow>=14           # packed parquet data (data_prep.loader needs only numpy +
 pyyaml>=6.0
 # logging / analysis
 wandb>=0.17           # live dashboards; authenticate with `wandb login` (never put the key in a config)
+huggingface_hub>=0.34 # `hf download` of the data, checkpoint uploads (checkpoint.hf_repo)
 pandas>=2.0
 matplotlib>=3.7
 tensorboard>=2.14
 # tests
 pytest>=7.4
-# H100 / Linux only (optional, auto-detected; KDA kernels are numerically self-checked at start-up):
+# H100 / Linux only (auto-detected; KDA kernels are numerically self-checked at start-up). Needed for real-run
+# speed, see README "GPU kernels":
 #   pip install flash-linear-attention   # fla: KDA Triton kernels (varlen)
-#   pip install flash-attn               # flash_attn_varlen_func: document-masked full attention
+#   MAX_JOBS=10 pip install flash-attn --no-build-isolation   # document-masked full attention (may build from source)
 # The data reader imports data_prep.loader from the llm_training repo (../llm_training, or set
 # data.data_prep_root / $LMARCH_DATA_PREP).

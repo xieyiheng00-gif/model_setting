@@ -20,7 +20,7 @@ Exact counts are printed at start-up and written to `runs/<run>/meta.json`.
 ## Quick start
 
 ```bash
-pip install -r requirements.txt       # H100/Linux: + flash-linear-attention, flash-attn (optional)
+pip install -r requirements.txt       # H100/Linux: + flash-linear-attention and flash-attn (see "GPU kernels")
 # the data (TRAINING_DATA.md §1) and its reader: this repo imports llm_training/data_prep.loader
 hf download xie1231/llm-10b-packed --repo-type dataset --local-dir /data/llm/packed
 #   keep llm_training/ next to this repo, or set data.data_prep_root / $LMARCH_DATA_PREP
@@ -129,6 +129,29 @@ indexer's dense warm-up restarts at the branch. After that the run's own checkpo
 > 16K they build (T × T) masks. Compare their quality metrics; don't read their tokens/sec and memory
 > as architectural numbers.
 
+### GPU kernels (H100)
+
+Two optional packages decide the speed of a real run. Both are picked up automatically, and the
+start-up line (and `meta.json` → `runtime`) says which path each run uses:
+
+| package | used for | without it |
+|---|---|---|
+| `flash-attn` | F layers and the DSA dense warm-up with document masking (`attn_backend: flash_varlen`) | SDPA with a (B,T,T) mask (`sdpa_mask`): a start-up WARNING, and a note in the smoke summary |
+| `flash-linear-attention` (fla) | KDA (`kda_backend: fla`, numerically self-checked at start-up) | the PyTorch chunked kernel |
+
+The 2026-09-26 H100 speed test ran on `sdpa_mask` and got 12.7% MFU for dense 4K
+(`results/h100_smoke_2026-09-26`). flash-attn had no prebuilt wheel for torch 2.12 + CUDA 13, and
+building it took ~25 min:
+
+```bash
+pip install ninja packaging
+MAX_JOBS=10 pip install flash-attn --no-build-isolation   # MAX_JOBS bounds RAM use during the build
+python -c "import flash_attn; print(flash_attn.__version__)"
+```
+
+Install it once per machine or image, and before the real runs. `--set model.attn_backend=flash_varlen`
+makes a run fail at start-up instead of falling back.
+
 ## What is saved
 
 Metrics go to `runs/<run>/metrics/*.jsonl` (append-only; readers keep the last record per step) and, live,
@@ -141,8 +164,13 @@ checkpoints to `checkpoints/`, NaN forensics to `crash_reports/`, plus `meta.jso
   - `loss_by_source`, `loss_by_row_type`, `valid_tokens`, `long_token_frac`, `mean_segment_len`;
   - `data_index`, `data_batch`, `data_epoch`, indexer KL per layer and type.
 - **Every 100 steps**, per layer and **grouped by layer type**:
-  - activation RMS at each block output, per-group grad norms, and update/weight ratios with a health
-    label and alerts;
+  - activation RMS at each block output, per-group grad norms (before clipping), and update/weight
+    ratios with a health label and alerts;
+  - the update/weight ratio `‖ΔW‖/‖W‖` is taken over the weight **matrices** of a group. 1-D
+    parameters (norm gains, KDA `A_log`/`dt_bias`, CSA biases/sink) are reported separately as
+    `vec_ratio`, because their large norms would otherwise dominate the ratio;
+  - ratio alerts start at `diag.alert_start_step` (1000). Right after warm-up the weights are still
+    near their init, and ratios of ~1e-2 (the embedding most of all) are normal;
   - F/S/C: max logit and entropy per head;
   - S/C: indexer KL, attention-mass recall, effective sparsity and density;
   - C: sink/window mass;
@@ -209,7 +237,8 @@ wandb login          # paste the key from https://wandb.ai/authorize; stored in 
 ```
 On a cluster, `export WANDB_API_KEY=...` from a secret works instead. With no key, the run logs
 offline to `runs/<run>/wandb/` and prints the `wandb sync` command to upload it later. W&B problems
-(no package, auth, network) switch W&B off with a message; they never stop training.
+(no package, auth, network, API changes) switch W&B off; they never stop training. The run records
+them as a `wandb` event with `mode: failed` and the error, and `scripts/smoke.py` fails on them.
 
 - **Grouping:**
   - run name = `<arch>_<stage>_<hw>`;
@@ -238,7 +267,9 @@ offline to `runs/<run>/wandb/` and prints the `wandb sync` command to upload it 
 ## Crash handling
 
 The trainer skips non-finite steps and writes a forensics report naming the first non-finite module
-and its layer type. Repeated failures trigger a **rollback** to the last healthy checkpoint of the
+and its layer type. Every loss or grad-norm spike logs a `guard` event with the gradient norms
+(before clipping) per layer type and the five largest per layer. The step record gets `grad_culprit`
+(e.g. `L05.mixer(kda) 83.2`), and the console line shows it. Repeated failures trigger a **rollback** to the last healthy checkpoint of the
 stage. The rollback skips the offending data by raising `data_skip`, so step *s* then reads batch
 *s − start + data_skip*. It escalates to older checkpoints, and after `max_rollbacks` it exits with
 code 4. `scripts/supervise.py` restarts on errors and preemption, halves the micro-batch on OOM, and
@@ -252,6 +283,86 @@ recall low → longer dense warm-up; KDA state norm exploding → lower LR; `log
 `python scripts/smoke.py --faults` rehearses all of this on real data:
 poisoned batches → skip → rollback → recovery, then an injected crash → supervisor restart → exact resume.
 
+## Checkpoints and Hugging Face uploads
+
+A checkpoint is the full training state: fp32 weights, both Adam moments, trainer and guard state, and
+RNG. That is about 2.2 GB at full size. Saves are atomic (a `COMPLETE` marker is written last).
+
+| setting (`configs/base.yaml`) | meaning |
+|---|---|
+| `checkpoint.interval: 500` | a checkpoint every 500 steps |
+| `checkpoint.keep_last: 3` | the newest 3 regular checkpoints stay on disk; older ones are deleted |
+| `checkpoint.milestone_interval: 2500` | every 2,500 steps: a milestone, never deleted |
+| `save_final: true` | `step_<last>_final` at the end of every stage, never deleted |
+
+For one architecture on the full plan (times at the modelled 8×H100 speed of kda_full):
+
+| stage | checkpoints saved | on disk at the end | uploaded to the Hub |
+|---|---|---|---|
+| trunk (steps 0 → 13,351) | 27: 500, 1,000 … 13,000 + final (one every ~8 min) | 9 (~20 GB) | 6: 2,500 … 12,500 + final (~13 GB, one every ~40 min) |
+| s2_16k (13,351 → 18,770) | 12: 13,500 … 18,500 + final (every ~11 min) | 6 (~13 GB) | 3: 15,000, 17,500 + final (~7 GB) |
+| s2_4k (13,351 → 18,770) | 12 (every ~8 min) | 6 (~13 GB) | 3 (~7 GB) |
+
+**Uploads.** `checkpoint.hf_repo` is set in `configs/h100x8/*` and `configs/h100x1/*` to the private repo
+`xie1231/model_setting-checkpoints`.
+- **What goes up:** the milestones and the final checkpoint (`checkpoint.hf_every` changes that; it must
+  be a multiple of 500). Each upload also takes a snapshot of the run's `meta.json`, `config.yaml`,
+  `wandb_run_id.txt` and `metrics/*.jsonl`. The layout in the repo mirrors `runs/<run>/`.
+- **How:** each upload runs in its own background process, so training never waits for it.
+  - The upload continues if the supervisor restarts the trainer. A restarted trainer re-queues anything
+    that is not marked uploaded.
+  - A checkpoint that is still uploading is not deleted by the keep-3 cleanup.
+  - At the normal end of a stage, the trainer waits up to `hf_wait_min` (60 min) for the uploads.
+- **Where to look:**
+  - `runs/<run>/hf_upload.log`;
+  - `hf_upload` events in `metrics/events.jsonl`;
+  - a W&B alert if an upload fails;
+  - `python -m lmarch.train.hf_upload --status runs/<run>`.
+- **Token:** `HF_TOKEN` needs write access to the checkpoint repo as well as read access to the dataset.
+
+**Restoring on a new machine** (the rented box died): download the run into `runs/`, then start the same
+training command again. It resumes from the newest downloaded checkpoint and continues the same W&B run.
+
+```bash
+python scripts/with_secrets.py -- hf download xie1231/model_setting-checkpoints --include "kda_full_trunk_h100x8/*" --local-dir runs
+```
+
+## Training one architecture on a rented 8×H100 (example: kda_full)
+
+1. **Send the keys into the machine's memory, not its disk.** From Git Bash in this repo on your computer
+   (`gpu` = your SSH host):
+   ```bash
+   ssh gpu "umask 077 && tr -d '\r' > /dev/shm/lmarch.env" < secrets.env
+   ```
+2. **Work inside tmux on the GPU machine,** so a dropped SSH connection does not kill the run
+   (`tmux new -s train`; detach with Ctrl-b d; come back with `tmux attach -t train`). Then:
+   - `export LMARCH_SECRETS_FILE=/dev/shm/lmarch.env`;
+   - install the requirements, flash-attn and fla (see "GPU kernels");
+   - fetch the data (16.5 GB). Plan for about 100 GB of free disk: the data plus ~47 GB of checkpoints.
+   ```bash
+   python scripts/with_secrets.py -- hf download xie1231/llm-10b-packed --repo-type dataset --local-dir /data/llm/packed
+   ```
+3. **Pre-flight, about 5 minutes on all 8 GPUs,** to test live W&B logging and the Hub uploads from this
+   machine:
+   ```bash
+   torchrun --standalone --nproc_per_node 8 scripts/train.py --config configs/h100x8/trunk.yaml --arch kda_full --run_name kda_full_preflight --set train.max_steps=40 schedule.warmup_steps=5 checkpoint.interval=20 checkpoint.hf_every=20 eval.interval=0 eval.final_full=false log.wandb_group=preflight
+   ```
+   Then check two things:
+   - W&B shows a loss curve for `kda_full_preflight`;
+   - `python -m lmarch.train.hf_upload --status runs/kda_full_preflight` lists 2 checkpoints as `uploaded`.
+
+   Afterwards you can delete that folder from the Hub.
+4. **The real run:** trunk, then the 16K and 4K branches, each under the crash supervisor.
+   ```bash
+   ARCHS=kda_full bash scripts/run_all.sh h100x8
+   ```
+5. **Watch it:** the W&B project `model_setting` has the runs `kda_full_trunk_h100x8`,
+   `kda_full_s2_16k_h100x8` and `kda_full_s2_4k_h100x8`. Their x-axis is `trainer/step`, so the branches
+   continue from step 13,351.
+6. **Before stopping the machine:** run
+   `python -m lmarch.train.hf_upload --status runs/kda_full_trunk_h100x8` (and the two branch runs) and
+   check that every milestone and final checkpoint says `uploaded`.
+
 ## Layout
 
 ```
@@ -259,7 +370,7 @@ lmarch/config.py        hyperparameters (dataclasses), YAML inherit (lists allow
 lmarch/data/packed.py   packed-data reader: trunk/stage-2 streams, labels, rank split, holdout, prefetch
 lmarch/data/synthetic.py  synthetic data with the real schema (tests)
 lmarch/model/           common (DocInfo, RoPE, norms), attention (F, S), indexer, kda, csa, model (chunked CE)
-lmarch/train/           trainer, guard, monitor, checkpoint (+ branch loading), logger, optim (WSD), dist
+lmarch/train/           trainer, guard, monitor, checkpoint (+ branch loading), hf_upload, logger, optim (WSD), dist
 scripts/                train, supervise, smoke, make_smoke_data, analyze_runs, run_all.{sh,ps1}
 configs/                base, stage/{trunk,s2_16k,s2_4k}, {h100x8,h100x1,rtx3060,smoke,test}/*
 ```

@@ -1,0 +1,13 @@
+=== dense / trunk start 01:22:46
+=== dense / trunk exit 0 01:23:36 | step     29/30 | loss 8.1627 | lr 6.00e-04 | gnorm 0.509 | 1.38s | 94.8k tok/s | mem 15.9GB
+=== dense / s2_16k start 01:23:36
+=== dense / s2_16k exit 0 01:24:41 | step     49/50 | loss 8.5611 | lr 1.52e-05 | gnorm 0.868 | 2.75s | 47.6k tok/s | mem 7.2GB
+=== dsa / trunk start 01:24:41
+=== dsa / trunk exit 0 01:27:00 | step     29/30 | loss 8.2662 | lr 6.00e-04 | gnorm 8.608 | 4.32s | 30.3k tok/s | mem 31.2GB | idxKL 0.303
+=== dsa / s2_16k start 01:27:00
+=== dsa / s2_16k exit 0 01:34:41 | step     49/50 | loss 8.7365 | lr 1.52e-05 | gnorm 4.932 | 22.48s | 5.8k tok/s | mem 15.3GB | idxKL 0.135
+=== kda_full / trunk start 01:34:41
+=== kda_full / trunk exit 0 01:38:20 | step     29/30 | loss 8.3193 | lr 6.00e-04 | gnorm 0.616 | 1.84s | 71.2k tok/s | mem 23.0GB
+=== kda_full / s2_16k start 01:38:20
+=== kda_full / s2_16k exit 0 01:39:05 | step     41/42 | loss 8.3924 | lr 2.55e-05 | gnorm 0.548 | 2.54s | 51.6k tok/s | mem 7.2GB
+=== kda_dsa / trunk start 01:39:05

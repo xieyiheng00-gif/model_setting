@@ -1,0 +1,28 @@
+# Speed test on 1 x H100: the FULL-SIZE model (d_model 768, 12 layers, 128K vocab) with the real per-GPU
+# micro-batches of configs/h100x8 (4 x 4K, or 1 x 16K + activation checkpointing), on the smoke data slice.
+hardware: h100speed
+data:
+  packed_dir: /workspace/model_setting/data/packed_smoke
+schedule:
+  warmup_steps: 5
+model:
+  indexer:
+    dense_warmup_steps: 5      # reach the sparse top-k phase of DSA/CSA quickly (default 500)
+eval:
+  interval: 0                  # no periodic evals: time pure training steps
+  rows_per_group: 1
+  final_full: false
+  micro_batch_size: 1
+diag:
+  interval: 1000               # diagnostics only on the first and last step (excluded from timing)
+  probe_batch_size: 1
+checkpoint:
+  interval: 0
+  keep_last: 1
+  milestone_interval: 0
+guard:
+  ema_warmup: 10
+log:
+  console_interval: 1
+  tensorboard: false
+  wandb: false
