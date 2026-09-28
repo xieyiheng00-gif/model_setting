@@ -97,7 +97,7 @@ Status of the issues in §4:
 | 1 | W&B `generate_id` moved in wandb 0.30 | fix d298344 carried onto the current `main`. A failed W&B start is now a `wandb` event with `mode: failed` and the error (it used to be one console line), and `scripts/smoke.py` fails on it |
 | 2 | pushed repo older than the README | resolved: PR #2 (secrets file, deny rules, `setup_secrets.py`, `with_secrets.py`) is merged into `main`; `git pull` on the box |
 | 3 | 42-char W&B key rejected | account side; the code has no key-length check (86-char keys work) |
-| 4 | flash-attn: no wheel, 25-min build | README "GPU kernels" has the build command. Runs on CUDA that fall back to `sdpa_mask` print a WARNING, record `attn_backend_reason` in `meta.json`, and get a note in the smoke summary |
+| 4 | flash-attn: no wheel, 25-min build | README "GPU kernels" installs a pinned prebuilt wheel (about 30 s) for torch 2.12 + CUDA 13; the source build is the fallback. Runs on CUDA that fall back to `sdpa_mask` print a WARNING, record `attn_backend_reason` in `meta.json`, and get a note in the smoke summary |
 
 Found while analysing `smoke/runs` (not in §4):
 

@@ -62,12 +62,12 @@ speed). `gpu` below stands for your SSH host.
 - [ ] A3. Rent 8×H100 **SXM**, with NVLink between all GPUs and at least 100 GB of free disk (data
       16.5 GB, checkpoints about 47 GB).
 
-### B. Set up the machine (about 45 min, mostly compiling flash-attn)
+### B. Set up the machine (about 15 min, mostly the data download)
 - [ ] B1. Send the keys into the machine's memory, not its disk. From Git Bash in this repo:
   ```bash
   ssh gpu "umask 077 && tr -d '\r' > /dev/shm/lmarch.env" < secrets.env
   ```
-- [ ] B2. Log in and do the setup inside tmux, so a dropped connection doesn't kill a 25-minute build:
+- [ ] B2. Log in and do the setup inside tmux, so a dropped connection doesn't interrupt an install:
       `ssh gpu`, then `tmux new -s setup` (`apt-get install -y tmux` if it's missing).
 - [ ] B3. Clone both repos side by side. The GitHub key is read from memory and stays out of the command
       line:
@@ -78,11 +78,16 @@ speed). `gpu` below stands for your SSH host.
   git -c credential.helper= -c credential.helper="$H" clone https://github.com/xieyiheng00-gif/llm_training.git
   unset WANDB_API_KEY HF_TOKEN GITHUB_TOKEN; export LMARCH_SECRETS_FILE=/dev/shm/lmarch.env; cd model_setting
   ```
-- [ ] B4. Install (PyTorch comes with the machine image):
+- [ ] B4. Install (PyTorch comes with the machine image). flash-attn comes as a prebuilt wheel, about 30 s
+      instead of a 25-minute build:
   ```bash
   pip install -r requirements.txt nvitop flash-linear-attention
-  MAX_JOBS=10 pip install flash-attn --no-build-isolation      # about 25 min; see "GPU kernels"
+  python -c "import torch, sys; print(torch.__version__, torch.version.cuda, sys.version[:6])"   # expect 2.12.x 13.0 3.12
+  pip install "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.9.17/flash_attn-2.8.3+cu130torch2.12-cp312-cp312-linux_x86_64.whl#sha256=1c0a88bbccf34378a24b580dc55b2e6b852ced1486510ba03bd309ef36a018e5"
+  python -c "import flash_attn; print(flash_attn.__version__)"      # 2.8.3
   ```
+  If the second line prints other versions, the wheel doesn't fit: pick the matching one or build from
+  source (see "GPU kernels").
 - [ ] B5. Check the GPUs:
   - `nvidia-smi` lists 8 × H100;
   - `nvidia-smi topo -m` shows `NV18` between every pair (NVLink).
@@ -252,14 +257,26 @@ start-up line (and `meta.json` → `runtime`) says which path each run uses:
 | `flash-linear-attention` (fla) | KDA (`kda_backend: fla`, numerically self-checked at start-up) | the PyTorch chunked kernel |
 
 The 2026-09-26 H100 speed test ran on `sdpa_mask` and got 12.7% MFU for dense 4K
-(`results/h100_smoke_2026-09-26`). flash-attn had no prebuilt wheel for torch 2.12 + CUDA 13, and
-building it took ~25 min:
+(`results/h100_smoke_2026-09-26`). The official flash-attn release has no wheel for torch 2.12 + CUDA 13,
+and building it from source took ~25 min. A prebuilt wheel installs in about 30 s instead:
 
 ```bash
-pip install ninja packaging
-MAX_JOBS=10 pip install flash-attn --no-build-isolation   # MAX_JOBS bounds RAM use during the build
-python -c "import flash_attn; print(flash_attn.__version__)"
+python -c "import torch, sys; print(torch.__version__, torch.version.cuda, sys.version[:6])"   # expect 2.12.x 13.0 3.12
+pip install "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.9.17/flash_attn-2.8.3+cu130torch2.12-cp312-cp312-linux_x86_64.whl#sha256=1c0a88bbccf34378a24b580dc55b2e6b852ced1486510ba03bd309ef36a018e5"
+python -c "import flash_attn; print(flash_attn.__version__)"   # 2.8.3; a mismatched build fails to import here
 ```
+
+- **Match all three versions.** The wheel only fits torch 2.12, CUDA 13.0 and Python 3.12, which the first
+  line prints. For another combination, take the file named `flash_attn-2.8.3+cu<CUDA>torch<torch>-cp<python>-…`
+  from the [release page](https://github.com/mjun0812/flash-attention-prebuild-wheels/releases).
+- **Third-party build.** The wheel comes from mjun0812/flash-attention-prebuild-wheels, not from the
+  flash-attn authors, and it runs inside the training process. The `#sha256=` pins the exact file that
+  release published, and pip refuses anything else.
+- **Fallback:** build from source, in tmux:
+  ```bash
+  pip install ninja packaging
+  MAX_JOBS=10 pip install flash-attn --no-build-isolation   # ~25 min; MAX_JOBS bounds RAM use during the build
+  ```
 
 Install it once per machine or image, and before the real runs. `--set model.attn_backend=flash_varlen`
 makes a run fail at start-up instead of falling back.
