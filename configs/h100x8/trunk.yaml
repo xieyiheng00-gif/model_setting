@@ -9,5 +9,6 @@ train:
   compile_ops: true           # fused elementwise kernels (self-checked; --set train.compile_ops=false)
 log:
   tensorboard: true
+  wandb_project: model_setting_real   # real runs; the pre-flight and tests stay in model_setting
 checkpoint:
   hf_repo: xie1231/model_setting-checkpoints   # private; milestones + final are uploaded

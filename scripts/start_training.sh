@@ -49,7 +49,7 @@ tmux new-session -d -s "$SESSION" -n train -c "$ROOT"
 tmux set-option -t "$SESSION" history-limit 200000 >/dev/null
 tmux send-keys -t "$SESSION:train" "$RUN" C-m
 if command -v nvitop >/dev/null 2>&1; then GPU_VIEW="nvitop"; else GPU_VIEW="watch -n 1 nvidia-smi"; fi
-tmux new-window -d -t "$SESSION" -n gpu -c "$ROOT" "$GPU_VIEW"
+tmux new-window -d -t "$SESSION:" -n gpu -c "$ROOT" "$GPU_VIEW"
 
 echo "training started in tmux session '$SESSION': $ARCHS | $STAGES | $HW"
 echo "  log file:  $LOG      (the W&B link: grep -m3 'wandb.ai' $LOG)"
