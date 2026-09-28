@@ -51,6 +51,42 @@ def test_monitor_samples_every_gpu_and_summarizes(tmp_path, monkeypatch):
     assert mon.summary() is None or mon.summary()["samples"] >= 0
 
 
+def test_monitor_reads_performance_counters(tmp_path, monkeypatch):
+    """SM active / occupancy, tensor and DRAM activity through the real nvidia-ml-py ctypes structures (no GPU:
+    the NVML calls are faked); GPU 1 has no counters and must simply lack them."""
+    real = pytest.importorskip("pynvml")
+    nv = _fake_nvml()
+    for name in ("c_nvmlGpmMetricsGet_t", "c_nvmlGpmSample_t", "NVML_GPM_METRICS_GET_VERSION", "NVML_GPM_METRIC_SM_UTIL",
+                 "NVML_GPM_METRIC_SM_OCCUPANCY", "NVML_GPM_METRIC_ANY_TENSOR_UTIL", "NVML_GPM_METRIC_DRAM_BW_UTIL"):
+        setattr(nv, name, getattr(real, name))
+    values = {real.NVML_GPM_METRIC_SM_UTIL: 88.0, real.NVML_GPM_METRIC_SM_OCCUPANCY: 30.0,
+              real.NVML_GPM_METRIC_ANY_TENSOR_UTIL: 41.5, real.NVML_GPM_METRIC_DRAM_BW_UTIL: 55.0}
+    nv.nvmlGpmQueryDeviceSupport = lambda h: types.SimpleNamespace(isSupportedDevice=int(h == 0))
+    nv.nvmlGpmSampleAlloc = lambda: real.c_nvmlGpmSample_t()
+    nv.nvmlGpmSampleGet = lambda h, smp: smp
+    nv.nvmlGpmSampleFree = lambda smp: None
+
+    def metrics_get(mg):
+        assert mg.version == real.NVML_GPM_METRICS_GET_VERSION and mg.numMetrics == 4
+        for j in range(mg.numMetrics):
+            mg.metrics[j].value = values[mg.metrics[j].metricId]
+            mg.metrics[j].nvmlReturn = 0
+        return mg
+    nv.nvmlGpmMetricsGet = metrics_get
+    monkeypatch.setitem(sys.modules, "pynvml", nv)
+    mon = G.GPUMonitor(tmp_path / "gpu.jsonl", 0.01, lambda: 3)
+    deadline = time.time() + 5
+    while time.time() < deadline and len(mon._window) < 3:
+        time.sleep(0.01)
+    s = mon.summary()
+    mon.close()
+    assert mon.gpm_status == "on (1 of 2 GPUs)"
+    assert s["sm_active_mean"] == 88.0 and s["sm_occupancy_mean"] == 30.0
+    assert s["tensor_active_mean"] == 41.5 and s["dram_active_mean"] == 55.0
+    rec = json.loads((tmp_path / "gpu.jsonl").read_text().splitlines()[-1])
+    assert rec["gpus"][0]["tensor_active"] == 41.5 and "tensor_active" not in rec["gpus"][1]
+
+
 def test_summary_of_nothing_is_none():
     assert G.summarize([]) is None
 
@@ -103,7 +139,8 @@ def test_gpu_report_on_a_synthetic_run(tmp_path):
         for s in range(600):                                        # 10 min, 2 GPUs; a 30 s stall at 5 min
             stall = 300 <= s < 330
             gpus = [{"i": i, "util": 0 if stall else 98 - 4 * i, "power_w": 150 if stall else 600, "sm_mhz": 1980,
-                     "mem_gb": 20, "temp_c": 60, "throttle": 0x4 if (s % 10 == 0 and not stall) else 0}
+                     "mem_gb": 20, "temp_c": 60, "throttle": 0x4 if (s % 10 == 0 and not stall) else 0,
+                     "sm_active": 0 if stall else 80, "tensor_active": 0 if stall else 40}
                     for i in range(2)]
             f.write(json.dumps({"time": t0 + s, "step": s, "gpus": gpus}) + "\n")
     with open(m / "train_steps.jsonl", "w") as f:
@@ -116,6 +153,8 @@ def test_gpu_report_on_a_synthetic_run(tmp_path):
     row = json.loads((out / "gpu_summary.json").read_text())[0]
     assert row["gpus"] == 2 and row["slowest_gpu"] == 1 and row["low_util_min"] == pytest.approx(0.5)
     assert row["mfu_median_pct"] == 20.0 and row["power_capped_pct"] == pytest.approx(9.5)   # 57 of 600 s
+    assert row["sm_active_mean"] == pytest.approx(76.0) and row["tensor_active_mean"] == pytest.approx(38.0)
+    assert "dram_active_mean" not in row                             # a counter that was never recorded
     stretch = row["low_util_stretches"][0]
     assert stretch["minutes"] == pytest.approx(0.5) and "checkpoint save" in stretch["during"]
     if importlib.util.find_spec("matplotlib"):

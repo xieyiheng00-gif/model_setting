@@ -116,8 +116,10 @@ class TrainConfig:
     max_steps: int = 13351          # ABSOLUTE final step (stage 2 continues the stage-1 step counter)
     seed: int = 1337
     dtype: str = "bf16"             # bf16 (autocast, fp32 master weights) | fp32
-    compile: bool = False
-    activation_checkpointing: bool = False
+    compile: bool = False           # torch.compile the whole model (untested; see compile_ops)
+    compile_ops: bool = False       # fuse the elementwise work with torch.compile (lmarch/model/fused.py; self-checked)
+    fused_ce: bool = True           # fused LM head + cross-entropy for training steps (self-checked at start-up)
+    activation_checkpointing: str = "false"   # true | false | auto (= only for archs with S/C layers above 4K)
     grad_clip: float = 1.0
     z_loss_coef: float = 0.0
     loss_chunk_tokens: int = 2048   # LM head + CE computed in chunks (128K vocab: never materialise all logits)
@@ -410,6 +412,10 @@ def validate(cfg: Config) -> None:
         raise ConfigError("model.kda.backend must be auto|fla|torch")
     if cfg.log.wandb_mode not in ("online", "offline", "disabled"):
         raise ConfigError("log.wandb_mode must be online|offline|disabled")
+    ac = str(cfg.train.activation_checkpointing).lower()
+    if ac not in ("true", "false", "auto"):
+        raise ConfigError("train.activation_checkpointing must be true | false | auto")
+    cfg.train.activation_checkpointing = ac
     if cfg.log.gpu_interval_sec <= 0 or cfg.log.wandb_stats_interval_sec <= 0 or cfg.log.peak_tflops < 0:
         raise ConfigError("log.gpu_interval_sec and log.wandb_stats_interval_sec must be > 0, log.peak_tflops >= 0")
     if m.attn_backend not in ("auto", "sdpa", "flash_varlen"):
@@ -447,6 +453,16 @@ def validate(cfg: Config) -> None:
                               f"({c.interval}) so that it falls on a saved checkpoint")
     if 0 < decay_start(cfg) < s.warmup_steps:
         raise ConfigError("warmup must end before the decay phase starts")
+
+
+def activation_checkpointing(cfg: Config) -> bool:
+    """Resolved train.activation_checkpointing. `auto` recomputes blocks only for architectures with DSA/CSA layers
+    at sequence lengths above 4K: their (T x T) indexer/mask tensors need it, while dense and KDA fit in memory at
+    16K without it (the same activation memory as a 4 x 4K micro-batch) and save the recompute."""
+    ac = str(cfg.train.activation_checkpointing).lower()
+    if ac == "auto":
+        return any(c in "SC" for c in cfg.model.pattern()) and cfg.train.seq_len > 4096
+    return ac == "true"
 
 
 def data_row_len(cfg: Config) -> int:

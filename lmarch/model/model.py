@@ -14,6 +14,7 @@ import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 
 from ..config import INDEXER_TYPES, LAYER_TYPE_NAMES, ModelConfig
+from . import fused
 from .attention import DSAAttention, SoftmaxAttention, flash_varlen_fn
 from .common import Ctx, DocInfo, RMSNorm, RunFlags, SwiGLU
 from .csa import CSAAttention
@@ -34,8 +35,8 @@ class Block(nn.Module):
 
     def forward(self, x: torch.Tensor, ctx: Ctx):
         h, aux = self.mixer(self.norm1(x), ctx)
-        x = x + h
-        f = self.ffn(self.norm2(x))
+        x, n2 = fused.add_rms_norm(x, h, self.norm2.weight, self.norm2.eps)   # x + h and its RMSNorm, fused
+        f = self.ffn(n2)
         x = x + f
         if ctx.flags.diag:
             with torch.no_grad():
@@ -69,6 +70,7 @@ class LM(nn.Module):
         self.grad_checkpointing = False
         self.z_loss_coef = 0.0
         self.loss_chunk_tokens = 2048
+        self.fused_ce = False               # set by configure_runtime (after its self-check)
         self.reset_parameters()
 
     # ---- init ---------------------------------------------------------------------------
@@ -89,9 +91,11 @@ class LM(nn.Module):
             if hasattr(mod, "reset_special_parameters"):
                 mod.reset_special_parameters(self.cfg)
 
-    def configure_runtime(self, device: torch.device, doc_mask: bool, bf16: bool) -> dict:
-        """Pick kernels for this device: KDA backend (fla varlen / torch) and document-masked full attention
-        (flash-attn varlen / SDPA with mask). Returns info for the run metadata."""
+    def configure_runtime(self, device: torch.device, doc_mask: bool, bf16: bool, fused_ce: bool = False,
+                          compile_ops: bool = False) -> dict:
+        """Pick kernels for this device: KDA backend (fla varlen / torch), document-masked full attention
+        (flash-attn varlen / SDPA with mask), compiled elementwise kernels (fused.py) and the fused LM-head loss.
+        The last two are used only if their start-up self-checks pass. Returns info for the run metadata."""
         info = {}
         kda = [b.mixer for b in self.blocks if b.code == "K"]
         if kda:
@@ -118,6 +122,13 @@ class LM(nn.Module):
                 print(f"[lmarch] WARNING: document-masked attention falls back to SDPA with a (B,T,T) mask ({why}); "
                       "F layers are slow on this path (H100 speed test: dense 4K at 12.7% MFU). "
                       "Install flash-attn for real runs (README: 'GPU kernels').", flush=True)
+        info["compile_ops"] = fused.configure(device, compile_ops)
+        self.fused_ce = False
+        info["fused_ce"] = "off"
+        if fused_ce:
+            ok, why = linear_ce_self_check(device, bf16)
+            self.fused_ce = ok
+            info["fused_ce"] = f"{'on' if ok else 'off'} ({why})"
         return info
 
     # ---- forward ------------------------------------------------------------------------
@@ -146,9 +157,13 @@ class LM(nn.Module):
             out["aux_loss"] = self.cfg.indexer.loss_coef * kl.sum()
         if labels is not None:
             want_z = self.z_loss_coef > 0 and self.training
-            tok, lse = chunked_ce(x, self.lm_head.weight, labels, self.loss_chunk_tokens, want_z)
             valid = labels != -100
-            out["loss_sum"] = tok.sum()
+            if self.fused_ce and self.training and torch.is_grad_enabled() and not want_z:
+                loss_sum, tok = linear_ce(x, self.lm_head.weight, labels, self.loss_chunk_tokens)
+                out["loss_sum"] = loss_sum                       # tok is detached (per-token bookkeeping only)
+            else:
+                tok, lse = chunked_ce(x, self.lm_head.weight, labels, self.loss_chunk_tokens, want_z)
+                out["loss_sum"] = tok.sum()
             out["n_valid"] = valid.sum()
             out["row_loss"] = tok.sum(1).detach()
             out["row_valid"] = valid.sum(1)
@@ -243,3 +258,72 @@ def chunked_ce(h: torch.Tensor, w: torch.Tensor, y: torch.Tensor, chunk: int, wa
         ls.append(lse)
     tok = torch.cat(tl).view(B, T)
     return tok, (torch.cat(ls).view(B, T) if want_lse else None)
+
+
+class _LinearCE(torch.autograd.Function):
+    """Sum over the valid targets of CE(h W^T, y) for a large vocabulary, `chunk` rows at a time. The gradients
+    w.r.t. h and W are computed during the forward pass, so the logits are neither stored nor recomputed; backward
+    only scales them by the incoming gradient. Only the SUM is differentiable (it is all the trainer uses)."""
+
+    @staticmethod
+    def forward(ctx, h, w, y, chunk: int, cdtype):
+        N = h.shape[0]
+        hc, wc = h.to(cdtype), w.to(cdtype)
+        tok = torch.empty(N, dtype=torch.float32, device=h.device)
+        dh = torch.empty_like(hc)
+        dw = torch.zeros(w.shape, dtype=torch.float32, device=w.device)
+        for s in range(0, N, chunk):
+            e = min(N, s + chunk)
+            loss, g = fused.ce_chunk_grad(hc[s:e] @ wc.T, y[s:e])     # g = softmax - onehot, (C, V) in cdtype
+            tok[s:e] = loss
+            dh[s:e] = g @ wc
+            dw.add_(g.T @ hc[s:e])                                    # fp32 accumulation of the per-chunk dW
+        ctx.save_for_backward(dh, dw)
+        ctx.h_dtype = h.dtype
+        ctx.mark_non_differentiable(tok)
+        return tok.sum(), tok
+
+    @staticmethod
+    def backward(ctx, g_sum, g_tok):
+        dh, dw = ctx.saved_tensors
+        return dh.to(ctx.h_dtype) * g_sum, dw * g_sum, None, None, None
+
+
+def linear_ce(h: torch.Tensor, w: torch.Tensor, y: torch.Tensor, chunk: int):
+    """Fused tied-LM-head cross-entropy for training steps: (differentiable sum over valid tokens, per-token loss
+    (B,T) fp32, detached). Same values and gradients as chunked_ce(...)[0].sum(), with fewer passes over the
+    (tokens x 128K) logits and no recompute."""
+    B, T, d = h.shape
+    dev = h.device.type
+    cd = torch.get_autocast_dtype(dev) if torch.is_autocast_enabled(dev) else h.dtype
+    with torch.autocast(device_type=dev, enabled=False):
+        loss_sum, tok = _LinearCE.apply(h.reshape(-1, d), w, y.reshape(-1), chunk, cd)
+    return loss_sum, tok.view(B, T)
+
+
+def linear_ce_self_check(device: torch.device, bf16: bool) -> tuple[bool, str]:
+    """linear_ce vs chunked_ce (loss, dh, dW) on a small random problem on this device."""
+    g = torch.Generator(device="cpu").manual_seed(0)
+    N, d, V, chunk = 300, 64, 997, 128
+    h0 = torch.randn(1, N, d, generator=g).to(device)
+    w0 = (0.05 * torch.randn(V, d, generator=g)).to(device)
+    y = torch.randint(0, V, (1, N), generator=g)
+    y[0, ::9] = -100
+    y = y.to(device)
+    amp = bf16 and device.type == "cuda"
+
+    def run(fn):
+        h, w = h0.clone().requires_grad_(), w0.clone().requires_grad_()
+        with torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=amp):
+            loss = fn(h, w)
+        loss.backward()
+        return loss.detach().float(), h.grad.float(), w.grad.float()
+
+    try:
+        ref = run(lambda h, w: chunked_ce(h, w, y, chunk)[0].sum())
+        got = run(lambda h, w: linear_ce(h, w, y, chunk)[0])
+    except Exception as e:  # noqa: BLE001
+        return False, f"self-check raised {type(e).__name__}: {e}"
+    errs = [((a - b).abs().max() / a.abs().max().clamp(min=1e-12)).item() for a, b in zip(ref, got)]
+    ok = max(errs) < (2e-2 if amp else 1e-4)
+    return ok, f"self-check {'ok' if ok else 'FAILED'} (rel err loss {errs[0]:.1e}, dh {errs[1]:.1e}, dW {errs[2]:.1e})"

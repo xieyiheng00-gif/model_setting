@@ -34,7 +34,8 @@ import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from .. import __version__
-from ..config import ARCH_PRESETS, LAYER_TYPE_NAMES, Config, ConfigError, build_config, save_config, stage_tag
+from ..config import (ARCH_PRESETS, LAYER_TYPE_NAMES, Config, ConfigError, activation_checkpointing, build_config,
+                      save_config, stage_tag)
 from ..data.packed import N_GROUPS, Holdout, PackedData, Prefetcher, group_name
 from ..model import RunFlags, build_model
 from ..secrets import load_secrets, redact
@@ -120,10 +121,12 @@ class Trainer:
         # ---- model / optimizer ------------------------------------------------------------
         self._seed(cfg.train.seed)
         self.raw = build_model(cfg.model).to(self.dev)
-        self.raw.grad_checkpointing = cfg.train.activation_checkpointing
+        self.raw.grad_checkpointing = activation_checkpointing(cfg)
         self.raw.z_loss_coef = cfg.train.z_loss_coef
         self.raw.loss_chunk_tokens = cfg.train.loss_chunk_tokens
-        self.runtime_info = self.raw.configure_runtime(self.dev, cfg.data.doc_mask, cfg.train.dtype == "bf16")
+        self.runtime_info = self.raw.configure_runtime(self.dev, cfg.data.doc_mask, cfg.train.dtype == "bf16",
+                                                       fused_ce=cfg.train.fused_ce, compile_ops=cfg.train.compile_ops)
+        self.runtime_info["activation_checkpointing"] = self.raw.grad_checkpointing
         model = self.raw
         if cfg.train.compile:
             model = torch.compile(model)
@@ -162,6 +165,7 @@ class Trainer:
                 self.gpumon = GPUMonitor(self.run_dir / "metrics" / "gpu.jsonl", cfg.log.gpu_interval_sec,
                                          lambda: self.state.step)
                 self.runtime_info["gpu_monitor"] = self.gpumon.names
+                self.runtime_info["gpu_perf_counters"] = self.gpumon.gpm_status   # SM/tensor/DRAM activity
             except Exception as e:  # noqa: BLE001 - telemetry must never block training
                 self.log.event("warning", message=f"GPU monitor off ({type(e).__name__}: {e}); "
                                                   "pip install nvidia-ml-py")

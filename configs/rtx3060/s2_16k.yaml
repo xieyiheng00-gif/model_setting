@@ -8,6 +8,7 @@ data:
 train:
   micro_batch_size: 1
   max_steps: 40
+  activation_checkpointing: true   # 12 GB: always recompute at 16K
 schedule:
   warmup_steps: 5
   decay_start: 30

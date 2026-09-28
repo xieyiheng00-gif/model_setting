@@ -8,7 +8,7 @@ data:
 train:
   seq_len: 16384
   max_steps: 18770           # 13,351 + 5,419
-  activation_checkpointing: true
+  activation_checkpointing: auto   # on for DSA/CSA (T x T indexer tensors), off for dense/KDA (they fit)
 schedule:
   warmup_steps: 250
   decay_start: 13351

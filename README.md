@@ -33,8 +33,9 @@ python scripts/smoke.py               # trunk -> 16K + 4K branches for all 5 arc
 python scripts/smoke.py --archs dense kda_dsa --faults    # + rehearse NaN rollback and crash restart
 python scripts/smoke.py --config_dir configs/rtx3060 --archs dense --stages trunk s2_4k   # full-size model
 
-# REAL RUNS (8 x H100): stage 1, then both branches, every arch, under the crash supervisor
-bash scripts/run_all.sh h100x8
+# REAL RUNS (8 x H100): follow "Checklist: training on a rented 8×H100" below. The run itself:
+bash scripts/start_training.sh        # kda_full: trunk -> both branches, in a detached tmux session
+bash scripts/run_all.sh h100x8        # every arch, in the foreground
 # or one at a time
 python scripts/supervise.py --run_dir runs/dsa_trunk_h100x8 -- \
     torchrun --standalone --nproc_per_node 8 scripts/train.py --config configs/h100x8/trunk.yaml --arch dsa
@@ -44,6 +45,116 @@ python scripts/analyze_runs.py runs/*_trunk_h100x8 --out reports/trunk
 ```
 
 You can override any config value, e.g. `--set optim.lr=3e-4 data.packed_dir=/mnt/packed`.
+
+## Checklist: training on a rented 8×H100
+
+Everything to do, in order; tick the boxes as you go. The example trains **kda_full**: the trunk, then the
+16K and 4K branches. That is about 7 h on 8×H100 SXM without the speed-ups (step C2 measures the real
+speed). `gpu` below stands for your SSH host.
+
+### A. On your computer, before renting
+- [ ] A1. `main` has everything: `git pull`.
+- [ ] A2. The keys work: `python scripts/setup_secrets.py --verify` prints your W&B, Hugging Face and GitHub
+      accounts. What each key needs:
+  - Hugging Face: read access to `xie1231/llm-10b-packed`, write access to
+    `xie1231/model_setting-checkpoints`;
+  - GitHub: read access to `model_setting` and `llm_training`.
+- [ ] A3. Rent 8×H100 **SXM**, with NVLink between all GPUs and at least 100 GB of free disk (data
+      16.5 GB, checkpoints about 47 GB).
+
+### B. Set up the machine (about 45 min, mostly compiling flash-attn)
+- [ ] B1. Send the keys into the machine's memory, not its disk. From Git Bash in this repo:
+  ```bash
+  ssh gpu "umask 077 && tr -d '\r' > /dev/shm/lmarch.env" < secrets.env
+  ```
+- [ ] B2. Log in and do the setup inside tmux, so a dropped connection doesn't kill a 25-minute build:
+      `ssh gpu`, then `tmux new -s setup` (`apt-get install -y tmux` if it's missing).
+- [ ] B3. Clone both repos side by side. The GitHub key is read from memory and stays out of the command
+      line:
+  ```bash
+  set -a; . /dev/shm/lmarch.env; set +a
+  H='!f() { echo username=x-access-token; echo "password=$GITHUB_TOKEN"; }; f'
+  git -c credential.helper= -c credential.helper="$H" clone https://github.com/xieyiheng00-gif/model_setting.git
+  git -c credential.helper= -c credential.helper="$H" clone https://github.com/xieyiheng00-gif/llm_training.git
+  unset WANDB_API_KEY HF_TOKEN GITHUB_TOKEN; export LMARCH_SECRETS_FILE=/dev/shm/lmarch.env; cd model_setting
+  ```
+- [ ] B4. Install (PyTorch comes with the machine image):
+  ```bash
+  pip install -r requirements.txt nvitop flash-linear-attention
+  MAX_JOBS=10 pip install flash-attn --no-build-isolation      # about 25 min; see "GPU kernels"
+  ```
+- [ ] B5. Check the GPUs:
+  - `nvidia-smi` lists 8 × H100;
+  - `nvidia-smi topo -m` shows `NV18` between every pair (NVLink).
+- [ ] B6. Download the data (16.5 GB):
+  ```bash
+  python scripts/with_secrets.py -- hf download xie1231/llm-10b-packed --repo-type dataset --local-dir /data/llm/packed
+  ```
+
+### C. Checks before spending the hours (about 20 min)
+- [ ] C1. Tests: `pytest -q tests`. This includes the checks that the fused kernels match the plain code on
+      the GPU.
+- [ ] C2. Speed check on one GPU (about 10 min):
+  ```bash
+  python scripts/bench_step.py --config configs/h100x8/trunk.yaml --arch kda_full --ab
+  python scripts/bench_step.py --config configs/h100x8/s2_16k.yaml --arch kda_full --ab
+  ```
+  Expect:
+  - `attn_backend: flash_varlen` and `kda_backend: fla`;
+  - `compile_ops: on (self-check ok …)` and `fused_ce: on (self-check ok …)`;
+  - matching first-step losses, and a speed-up. Note the tokens/s and MFU.
+- [ ] C3. Pre-flight on all 8 GPUs (5–8 min: 40 steps, 2 checkpoint uploads):
+  ```bash
+  torchrun --standalone --nproc_per_node 8 scripts/train.py --config configs/h100x8/trunk.yaml --arch kda_full --run_name kda_full_preflight --set train.max_steps=40 schedule.warmup_steps=5 checkpoint.interval=20 checkpoint.hf_every=20 eval.interval=0 eval.final_full=false log.wandb_group=preflight
+  ```
+  - [ ] The start-up line shows `gpu_perf_counters: on (8 of 8 GPUs)`.
+  - [ ] The W&B run `kda_full_preflight` has points in `train/loss`, `train/mfu` and the `gpu` section
+        (`gpu/sm_active_mean`, `gpu/tensor_active_mean`, `gpu/dram_active_mean`, `gpu/power_w_mean`).
+  - [ ] `python -m lmarch.train.hf_upload --status runs/kda_full_preflight` lists 2 checkpoints as
+        `uploaded`.
+  - [ ] Optional: afterwards delete `kda_full_preflight/` from the Hub repo and the run from W&B.
+
+### D. Start the run (1 min)
+- [ ] D1. `bash scripts/start_training.sh`
+  - It checks the keys, then runs `ARCHS=kda_full bash scripts/run_all.sh h100x8` inside a new, detached
+    tmux session called `train`.
+  - Window `train` holds the run, which is also logged to `logs/train_<date>.log`. Window `gpu` shows
+    nvitop.
+  - Other architectures: `ARCHS="dense kda_full" bash scripts/start_training.sh`.
+- [ ] D2. `tmux attach -t train`. Within a few minutes you should see:
+  - the W&B link;
+  - the runtime line: `flash_varlen`, `fla`, `compile_ops on`, `fused_ce on`, `gpu_perf_counters on`;
+  - then step lines with tokens/s and MFU.
+- [ ] D3. Detach with **Ctrl-b d**, then close SSH and your computer. The run keeps going on the server.
+
+### E. While it runs: where to look
+| what | where |
+|---|---|
+| loss curve | W&B project `model_setting`, run `kda_full_trunk_h100x8` (then `…_s2_16k_h100x8`, `…_s2_4k_h100x8`): `train/loss` |
+| speed | `train/tokens_per_sec`, `train/mfu` |
+| GPU hardware, per step (mean over the 8 GPUs, same x-axis as the loss) | W&B section `gpu`: `sm_active_mean`, `tensor_active_mean`, `dram_active_mean`, `sm_occupancy_mean`, `power_w_mean`, `util_mean`, `util_min_gpu`, `sm_mhz_min`, `mem_gb_max`, `temp_c_max`, `power_capped_frac` |
+| each GPU separately (every 5 s) | the run's **System** tab in W&B: GPU utilization, SM active, tensor-pipe active, DRAM active, power, clocks, NVLink |
+| the machine itself | `ssh gpu`, `tmux attach -t train`, **Ctrl-b n** for the nvitop window |
+| problems | W&B alerts (e-mail or Slack): a crash, rollback or failed upload, and each stage's end |
+
+How to read the GPU counters (all in %):
+- `sm_active` is the share of the SMs that have work.
+- `tensor_active` is the share of cycles the tensor cores (the matmul units) are busy. It is closest to MFU.
+- `dram_active` is the share of the peak memory bandwidth in use.
+- High `sm_active` with low `tensor_active` and high `dram_active` means memory-bound kernels: the fused
+  kernels in "Training speed" target exactly that.
+- `sm_active` dropping to near 0 marks pauses: checkpoints, evals, data waits.
+
+### F. After training, before stopping the machine
+- [ ] F1. The log shows all three stages finished: `tail -n 30 logs/train_*.log`.
+- [ ] F2. Every milestone and final checkpoint is on the Hub:
+      `python -m lmarch.train.hf_upload --status runs/kda_full_trunk_h100x8`, and the same for
+      `…_s2_16k_h100x8` and `…_s2_4k_h100x8`.
+- [ ] F3. `run_all.sh` wrote `reports/h100x8_trunk`, `reports/h100x8_stage2` and `reports/h100x8_gpu`.
+      Copy them to your computer with `scp -r gpu:<repo path>/reports .`. The metrics and the GPU telemetry
+      are also on the Hub.
+- [ ] F4. Stop the machine. The key file in `/dev/shm` disappears with it; revoke any key you created only
+      for this machine.
 
 ## Training plan and configs
 
@@ -99,8 +210,9 @@ indexer's dense warm-up restarts at the branch. After that the run's own checkpo
   - C: a compressed entry pools only tokens of its own document, and the window stays in the segment.
   - Tests check that a document inside a packed row gives the same outputs as the document alone,
     for every architecture.
-- **128K vocabulary.** The LM head and cross-entropy run in 2,048-token chunks under checkpointing,
-  so the full logits never exist.
+- **128K vocabulary.** The LM head and cross-entropy run in 2,048-token chunks, so the full logits never
+  exist. Training steps use the fused version (`train.fused_ce`): each chunk's gradient is computed in the
+  forward pass, so nothing is recomputed. Evals use the checkpointed chunked version.
 - **Holdout eval.** Periodic evals use 16 rows per group (1.8M tokens). The end of each stage runs
   the full holdout (35M tokens). Each eval reports loss overall, per **source × row_type**
   (TRAINING_DATA.md §3), and per position inside the document. `eval.extra_seq_lens` adds
@@ -151,6 +263,52 @@ python -c "import flash_attn; print(flash_attn.__version__)"
 
 Install it once per machine or image, and before the real runs. `--set model.attn_backend=flash_varlen`
 makes a run fail at start-up instead of falling back.
+
+### Training speed (MFU)
+
+The 1×H100 speed test reached 12.7% MFU (dense) and 8.4% (kda_full). Most of the time was not in the
+matmuls. It went into memory-bound work:
+- masked attention without flash-attn;
+- the fp32 logits of the 128K-vocabulary output layer, computed twice (forward and recompute);
+- chains of small elementwise ops (fp32 RMSNorm, SwiGLU, the KDA short conv, gates and L2 norms), each reading
+  and writing the whole activation.
+
+The H100 configs enable four exact speed-ups. Each is checked against the plain code at start-up and falls back
+to it by itself; the start-up line and `meta.json` → `runtime` show what is in use.
+
+| speed-up | setting | effect |
+|---|---|---|
+| flash-attn for document-masked full attention | automatic when installed | F layers skip cross-document blocks |
+| fused LM head + cross-entropy | `train.fused_ce: true` | the gradient is computed during the forward pass: no fp32 logits kept, no recompute |
+| compiled elementwise kernels | `train.compile_ops: true` (H100 configs) | `torch.compile` fuses RMSNorm, the residual add, SwiGLU, RoPE, the KDA conv, gates, L2 norm and output norm, and the loss softmax (`lmarch/model/fused.py`) |
+| activation checkpointing only where needed | `train.activation_checkpointing: auto` (16K stage) | dense and KDA skip the recompute at 16K (they fit: the same activation memory as a 4 × 4K micro-batch); DSA and CSA keep it |
+
+Notes:
+- The first steps of a run take 1–3 min longer while the kernels compile.
+- `--set train.compile_ops=false` (or the environment variable `LMARCH_NO_COMPILE=1`) and
+  `--set train.fused_ce=false` turn the speed-ups off.
+- If a 16K run without recompute ever runs out of memory, the supervisor restarts it with activation
+  checkpointing on.
+
+**Batch size.** The global batch (tokens per optimizer step) is part of the training recipe; changing it
+changes the results. The micro-batch (tokens per forward pass, 16K per GPU) can change freely, but it already
+fills the matmuls. The memory-bound work costs the same per token at any batch size, so a bigger micro-batch
+helps only a few percent. Try it with `--set train.micro_batch_size=8` below.
+
+**What to expect.**
+- **Dense:** mostly matmuls, so the speed-ups should bring it close to the 25–35% range.
+- **kda_full:** about half of its step is inside the nine KDA layers. The fla recurrence kernel does little
+  counted work (MFU counts only the layers' projections) and is bound by memory and latency. Expect roughly
+  1.5× (to about 12–15% MFU) until the KDA kernel itself gets faster.
+- Measure it before a run (about 5 minutes on one GPU):
+  ```bash
+  python scripts/bench_step.py --config configs/h100x8/trunk.yaml --arch kda_full --ab
+  python scripts/bench_step.py --config configs/h100x8/s2_16k.yaml --arch kda_full --ab
+  python scripts/bench_step.py --config configs/h100x8/trunk.yaml --arch kda_full --profile
+  ```
+  `--ab` compares the plain code with the speed-ups, and checks that the first-step loss matches.
+  `--profile` splits the GPU time by kernel family: matmul, attention, KDA, compiled ops, eager elementwise,
+  loss, optimizer. That shows where the rest of the time goes.
 
 ## What is saved
 
@@ -270,12 +428,13 @@ them as a `wandb` event with `mode: failed` and the error, and `scripts/smoke.py
 
 **Utilization % alone is misleading.** NVML's "GPU utilization" (what `nvidia-smi` and `nvitop` show) only
 measures how much of the time some kernel was running. It says nothing about how much of the GPU that kernel
-uses: the 1×H100 speed test ran at 99.7% utilization and 12.7% MFU. So the trainer records three things:
+uses: the 1×H100 speed test ran at 99.7% utilization and 12.7% MFU. So the trainer records three things.
+Checklist step E says where to watch them during a run:
 
 | what | where | how often |
 |---|---|---|
 | `mfu`: model FLOPs per second divided by the GPUs' BF16 peak (the speed report's convention) and `tokens_per_sec` | step record, W&B `train/mfu`, and the console line | every step |
-| utilization, memory, power, temperature, SM clock and throttle reasons of **every GPU**, read through NVML by rank 0 | `metrics/gpu.jsonl` (also uploaded to the Hub with each checkpoint); per-step summary in W&B `gpu/*` on the `trainer/step` axis | every 1 s (`log.gpu_interval_sec`) |
+| **every GPU**, read through NVML by rank 0: utilization, memory, **power**, temperature, SM clock, throttle reasons, and the hardware counters **SM active, SM occupancy, tensor-core active, DRAM active** (NVML GPM, Hopper and newer) | `metrics/gpu.jsonl` (also uploaded to the Hub with each checkpoint); per-step means in W&B `gpu/*` on the `trainer/step` axis, like the loss | every 1 s (`log.gpu_interval_sec`) |
 | W&B's own system metrics, including **`smActive` and `pipeTensorActive`** (how busy the SMs and tensor cores really are), NVLink/PCIe traffic, CPU, RAM and disk | the run's System tab in W&B | every 5 s (`log.wandb_stats_interval_sec`; W&B's default is 15 s) |
 
 Notes:
@@ -283,10 +442,11 @@ Notes:
   other GPUs.
 - For S, C and K layers only their projections are counted, so their MFU is a lower bound.
 - The monitor needs `nvidia-ml-py` (in `requirements.txt`). Without it the run logs a warning and trains
-  normally.
+  normally. The start-up line shows `gpu_perf_counters: on (8 of 8 GPUs)` when the hardware counters work.
 
-**Live view on the machine:** in a second tmux window, run `nvitop` (`pip install nvitop`; per-GPU history,
-per-process memory) or `watch -n 1 nvidia-smi`. Both are fine for a glance.
+**Live view on the machine:** `scripts/start_training.sh` opens `nvitop` in the tmux window `gpu` (per-GPU
+history, per-process memory; `nvidia-smi` if nvitop is missing). The hardware counters are only in W&B and
+`gpu.jsonl`.
 
 **After training** (or during it):
 ```bash
@@ -367,56 +527,14 @@ training command again. It resumes from the newest downloaded checkpoint and con
 python scripts/with_secrets.py -- hf download xie1231/model_setting-checkpoints --include "kda_full_trunk_h100x8/*" --local-dir runs
 ```
 
-## Training one architecture on a rented 8×H100 (example: kda_full)
-
-1. **Send the keys into the machine's memory, not its disk.** From Git Bash in this repo on your computer
-   (`gpu` = your SSH host):
-   ```bash
-   ssh gpu "umask 077 && tr -d '\r' > /dev/shm/lmarch.env" < secrets.env
-   ```
-2. **Work inside tmux on the GPU machine,** so a dropped SSH connection does not kill the run
-   (`tmux new -s train`; detach with Ctrl-b d; come back with `tmux attach -t train`). Then:
-   - `export LMARCH_SECRETS_FILE=/dev/shm/lmarch.env`;
-   - install the requirements, flash-attn and fla (see "GPU kernels");
-   - fetch the data (16.5 GB). Plan for about 100 GB of free disk: the data plus ~47 GB of checkpoints.
-   ```bash
-   python scripts/with_secrets.py -- hf download xie1231/llm-10b-packed --repo-type dataset --local-dir /data/llm/packed
-   ```
-3. **Pre-flight, about 5 minutes on all 8 GPUs,** to test live W&B logging and the Hub uploads from this
-   machine:
-   ```bash
-   torchrun --standalone --nproc_per_node 8 scripts/train.py --config configs/h100x8/trunk.yaml --arch kda_full --run_name kda_full_preflight --set train.max_steps=40 schedule.warmup_steps=5 checkpoint.interval=20 checkpoint.hf_every=20 eval.interval=0 eval.final_full=false log.wandb_group=preflight
-   ```
-   Then check two things:
-   - W&B shows a loss curve for `kda_full_preflight`;
-   - `python -m lmarch.train.hf_upload --status runs/kda_full_preflight` lists 2 checkpoints as `uploaded`.
-
-   Afterwards you can delete that folder from the Hub.
-4. **The real run:** trunk, then the 16K and 4K branches, each under the crash supervisor.
-   ```bash
-   ARCHS=kda_full bash scripts/run_all.sh h100x8
-   ```
-5. **Watch it:** the W&B project `model_setting` has the runs `kda_full_trunk_h100x8`,
-   `kda_full_s2_16k_h100x8` and `kda_full_s2_4k_h100x8`. Their x-axis is `trainer/step`, so the branches
-   continue from step 13,351.
-   - Loss: `train/loss`.
-   - Efficiency: `train/mfu`, `train/tokens_per_sec` and `gpu/*`.
-   - Hardware: the System tab (every GPU's utilization, `smActive`, `pipeTensorActive`, power).
-   - On the machine itself: `nvitop` in a second tmux window.
-6. **Before stopping the machine:**
-   - run `python -m lmarch.train.hf_upload --status runs/kda_full_trunk_h100x8` (and the two branch runs)
-     and check that every milestone and final checkpoint says `uploaded`;
-   - `python scripts/gpu_report.py runs/kda_full_*_h100x8 --out reports/gpu` writes the GPU report. The
-     telemetry is also on the Hub, so the report can be made later on any machine.
-
 ## Layout
 
 ```
 lmarch/config.py        hyperparameters (dataclasses), YAML inherit (lists allowed), --set overrides
 lmarch/data/packed.py   packed-data reader: trunk/stage-2 streams, labels, rank split, holdout, prefetch
 lmarch/data/synthetic.py  synthetic data with the real schema (tests)
-lmarch/model/           common (DocInfo, RoPE, norms), attention (F, S), indexer, kda, csa, model (chunked CE)
+lmarch/model/           common (DocInfo, norms), fused (compilable elementwise ops), attention (F, S), indexer, kda, csa, model (fused CE)
 lmarch/train/           trainer, guard, monitor, gpu_monitor, checkpoint (+ branch loading), hf_upload, logger, optim, dist
-scripts/                train, supervise, smoke, make_smoke_data, analyze_runs, gpu_report, run_all.{sh,ps1}
+scripts/                train, supervise, smoke, make_smoke_data, analyze_runs, gpu_report, bench_step, run_all.{sh,ps1}
 configs/                base, stage/{trunk,s2_16k,s2_4k}, {h100x8,h100x1,rtx3060,smoke,test}/*
 ```

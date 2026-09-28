@@ -52,7 +52,9 @@ train:
   seed: 1337
   dtype: bf16
   compile: false
-  activation_checkpointing: false
+  compile_ops: false         # fused elementwise kernels via torch.compile (on in configs/h100x*); self-checked
+  fused_ce: true             # fused LM head + cross-entropy (no logits recompute); self-checked
+  activation_checkpointing: false   # true | false | auto
   grad_clip: 1.0
   z_loss_coef: 0.0
   loss_chunk_tokens: 2048

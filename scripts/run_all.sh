@@ -4,6 +4,7 @@
 #   bash scripts/run_all.sh h100x8                 # torchrun, 8 GPUs
 #   bash scripts/run_all.sh h100x1
 #   ARCHS="dense kda_dsa" STAGES="trunk s2_16k" bash scripts/run_all.sh h100x8
+#   bash scripts/start_training.sh                 # the same inside a detached tmux session (kda_full by default)
 set -uo pipefail
 HW=${1:-h100x8}
 ARCHS=${ARCHS:-"dense dsa kda_full kda_dsa csa"}
@@ -28,3 +29,4 @@ for ARCH in $ARCHS; do
 done
 python scripts/analyze_runs.py runs/*_trunk_"${HW}" --out "reports/${HW}_trunk"
 python scripts/analyze_runs.py runs/*_s2_16k_"${HW}" runs/*_s2_4k_"${HW}" --out "reports/${HW}_stage2"
+python scripts/gpu_report.py runs/*_"${HW}" --out "reports/${HW}_gpu"      # utilization, SM/tensor/DRAM activity

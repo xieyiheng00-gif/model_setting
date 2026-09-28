@@ -5,7 +5,9 @@ from dataclasses import dataclass, field
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+
+from . import fused
+from .fused import apply_rope  # noqa: F401  (re-exported: RoPE lives with the other fusable functions)
 
 
 @dataclass
@@ -73,10 +75,7 @@ class RMSNorm(nn.Module):
         self.weight = nn.Parameter(torch.ones(dim))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        dtype = x.dtype
-        x = x.float()
-        x = x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
-        return (x * self.weight.float()).to(dtype)
+        return fused.rms_norm(x, self.weight, self.eps)          # fp32 inside, input dtype out
 
 
 class SwiGLU(nn.Module):
@@ -87,21 +86,7 @@ class SwiGLU(nn.Module):
         self.w_down._is_residual_proj = True
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        g, u = self.w_gate_up(x).chunk(2, dim=-1)
-        return self.w_down(F.silu(g) * u)
-
-
-def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor, rope_dim: int) -> torch.Tensor:
-    """Rotate-half RoPE on the LAST `rope_dim` channels of x (..., T, D); cos/sin: (T, rope_dim/2)."""
-    D = x.shape[-1]
-    xr = x if rope_dim == D else x[..., D - rope_dim:]
-    xr32 = xr.float()
-    h = rope_dim // 2
-    x1, x2 = xr32[..., :h], xr32[..., h:]
-    rot = torch.cat([x1 * cos - x2 * sin, x1 * sin + x2 * cos], dim=-1).to(x.dtype)
-    if rope_dim == D:
-        return rot
-    return torch.cat([x[..., : D - rope_dim], rot], dim=-1)
+        return self.w_down(fused.swiglu(self.w_gate_up(x)))
 
 
 class Rotary(nn.Module):
