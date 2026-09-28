@@ -24,6 +24,7 @@ import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 
 from ..config import ModelConfig
+from . import fused
 from .common import Ctx, RMSNorm, l2norm, tensor_summary
 
 
@@ -148,16 +149,17 @@ def _fla_fn():
         return None
 
 
-def _fla_call(fn, q, k, v, g, beta, scale, cu_seqlens=None):
+def _fla_call(fn, q, k, v, g, beta, scale, cu_seqlens=None, want_state: bool = True):
     """q,k,g (B,T,H,K) ... With cu_seqlens the batch is flattened to one varlen sequence and the returned
-    state holds one entry per segment."""
+    state holds one entry per segment. want_state=False skips writing the final states (training steps: they
+    are only needed for diagnostics); S is then None."""
     if cu_seqlens is None:
         q, k, v, g, beta = (t.contiguous() for t in (q, k, v, g, beta))
-        return fn(q=q, k=k, v=v, g=g, beta=beta, scale=scale, initial_state=None, output_final_state=True)
+        return fn(q=q, k=k, v=v, g=g, beta=beta, scale=scale, initial_state=None, output_final_state=want_state)
     B, T = q.shape[:2]
     flat = lambda t: t.reshape(1, B * T, *t.shape[2:]).contiguous()
     o, S = fn(q=flat(q), k=flat(k), v=flat(v), g=flat(g), beta=flat(beta), scale=scale, initial_state=None,
-              output_final_state=True, cu_seqlens=cu_seqlens.long())
+              output_final_state=want_state, cu_seqlens=cu_seqlens.long())
     return o.reshape(B, T, *o.shape[2:]), S
 
 
@@ -225,13 +227,7 @@ class ShortConv(nn.Module):
         T = x.shape[1]
         if pos is None:
             return F.silu(self.conv(x.transpose(1, 2))[..., :T]).transpose(1, 2)
-        w = self.conv.weight[:, 0, :].to(x.dtype)                           # (C, K); tap K-1 = lag 0
-        Kc = w.shape[1]
-        y = x * w[:, Kc - 1]
-        for j in range(1, Kc):
-            xs = F.pad(x, (0, 0, j, 0))[:, :T]                               # x_{t-j}
-            y = y + xs * (pos >= j).unsqueeze(-1).to(x.dtype) * w[:, Kc - 1 - j]
-        return F.silu(y)
+        return fused.short_conv_silu(x, self.conv.weight[:, 0, :].to(x.dtype), pos)   # tap K-1 = lag 0
 
 
 class KDAMixer(nn.Module):
@@ -280,25 +276,25 @@ class KDAMixer(nn.Module):
         q = self.q_conv(self.q_proj(x), pos).view(B, T, H, K)
         k = self.k_conv(self.k_proj(x), pos).view(B, T, H, K)
         v = self.v_conv(self.v_proj(x), pos).view(B, T, H, V)
-        q, k = l2norm(q.float()), l2norm(k.float())
-        graw = self.f_up(self.f_down(x)).float() + self.dt_bias.float()
-        g = -self.A_log.float().exp().view(1, 1, H, 1) * F.softplus(graw.view(B, T, H, K))   # log alpha <= 0
-        beta = torch.sigmoid(self.b_proj(x).float())
+        use_fla = self.backend == "fla"
+        cd = (torch.bfloat16 if torch.is_autocast_enabled() else torch.float32) if use_fla else torch.float32
+        q, k = fused.l2norm_qk(q, k, cd)                        # L2 over the head dim in fp32, kernel dtype out
+        # log forget gate g = -exp(A_log) * softplus(W_up W_down x + dt_bias) <= 0, per channel; beta per head
+        g, beta = fused.kda_gates(self.f_up(self.f_down(x)), self.dt_bias, self.A_log, self.b_proj(x), H, K)
         scale = K ** -0.5
-        if self.backend == "fla":
-            cd = torch.bfloat16 if torch.is_autocast_enabled() else torch.float32
+        if use_fla:
             cu = ctx.doc.cu_seqlens()[0] if seg is not None else None
-            o, S = _fla_call(_fla_fn(), q.to(cd), k.to(cd), v.to(cd), g, beta.to(cd), scale, cu)
-            if cu is not None:                                  # state at the end of each row's last segment
+            o, S = _fla_call(_fla_fn(), q, k, v.to(cd), g, beta.to(cd), scale, cu, want_state=ctx.flags.diag)
+            if cu is not None and S is not None:                # state at the end of each row's last segment
                 S = S[seg.sum(1).cumsum(0) - 1]
-            o = o.float()
         else:
             with torch.autocast(device_type=x.device.type, enabled=False):
                 o, S = kda_chunk_torch(q, k, v.float(), g, beta, scale, chunk_size=self.chunk_size, seg_start=seg)
-        gate = torch.sigmoid(self.g_up(self.g_down(x)).float()).view(B, T, H, V)
-        o = self.o_norm(o) * gate
+        gate_raw = self.g_up(self.g_down(x))
+        o = fused.gated_rms_norm(o, self.o_norm.weight, self.o_norm.eps, gate_raw)   # RMSNorm(o) * sigmoid(gate)
         out = self.o_proj(o.reshape(B, T, H * V))
         if ctx.flags.diag:
+            gate = torch.sigmoid(gate_raw.float()).view(B, T, H, V)
             self.last_diag = self._diag(g, beta, S, gate)
         return out, {}
 

@@ -6,10 +6,11 @@ Reads runs/<run>/metrics/gpu.jsonl (every GPU sampled through NVML, 1 s; lmarch/
 train_steps.jsonl (tokens/s, MFU), events.jsonl (checkpoints, restarts, rollbacks), eval.jsonl and
 diagnostics.jsonl, and writes to --out:
   gpu_summary.md / gpu_summary.json   one row per run: utilization (mean, 5th percentile, time below 50%), the
-                                      slowest GPU, power, SM clock, throttling, peak memory and temperature,
-                                      tokens/s and MFU
-  <run>_gpu.png                       utilization heatmap (GPU x time), then power, SM clock and MFU over time,
-                                      with checkpoint saves, evals and restarts marked
+                                      slowest GPU, SM active / occupancy, tensor-core and DRAM activity, power,
+                                      SM clock, throttling, peak memory and temperature, tokens/s and MFU
+  <run>_gpu.png                       utilization heatmap (GPU x time), then the hardware activity counters,
+                                      power, SM clock and MFU over time, with checkpoint saves, evals and restarts
+                                      marked
 It also prints the longest low-utilization stretches and what the trainer was doing at the time.
 Utilization only means that some kernel was running: read it together with MFU and power.
 """
@@ -24,6 +25,9 @@ import numpy as np
 # reference light palette (dataviz skill): chart chrome, one series hue, status "critical", sequential blue ramp
 SURFACE, INK, INK2, MUTED, GRID, AXIS = "#fcfcfb", "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7"
 SERIES, CRITICAL = "#2a78d6", "#d03b3b"
+# the activity counters: categorical slots 1-4 of the reference palette (validated; aqua/yellow need the legend)
+COUNTERS = (("sm_active", "SM active", "#2a78d6"), ("tensor_active", "tensor active", "#eb6834"),
+            ("dram_active", "DRAM bandwidth", "#1baf7a"), ("sm_occupancy", "SM occupancy", "#eda100"))
 BLUES = ["#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef", "#6da7ec", "#5598e7", "#3987e5", "#2a78d6", "#256abf",
          "#1c5cab", "#184f95", "#104281", "#0d366b"]
 LOW_UTIL = 50.0                          # % mean utilization below which a stretch counts as "low"
@@ -87,6 +91,8 @@ def analyze(run_dir: Path) -> dict | None:
     util, power = _matrix(samples, "util", n_gpu), _matrix(samples, "power_w", n_gpu)
     sm, mem, temp = _matrix(samples, "sm_mhz", n_gpu), _matrix(samples, "mem_gb", n_gpu), _matrix(samples, "temp_c", n_gpu)
     thr = _matrix(samples, "throttle", n_gpu)
+    ctr = {k: _matrix(samples, k, n_gpu) for k, _, _ in COUNTERS}
+    ctr = {k: v for k, v in ctr.items() if np.isfinite(v).any()}      # GPUs without performance counters: none
     with np.errstate(all="ignore"):
         um = np.nanmean(util, axis=1)
         per_gpu = np.nanmean(util, axis=0)
@@ -104,11 +110,12 @@ def analyze(run_dir: Path) -> dict | None:
         "sm_mhz_median": round(float(np.nanmedian(sm)), 0), "sm_mhz_p5": round(float(np.nanpercentile(sm, 5)), 0),
         "power_capped_pct": round(100 * float(np.mean(valid_thr & POWER_BITS > 0)), 1) if valid_thr.size else None,
         "thermal_pct": round(100 * float(np.mean(valid_thr & THERMAL_BITS > 0)), 1) if valid_thr.size else None,
+        **{f"{k}_mean": round(float(np.nanmean(v)), 1) for k, v in ctr.items()},
         "mem_gb_peak": round(float(np.nanmax(mem)), 1), "temp_c_peak": round(float(np.nanmax(temp)), 0),
         "tok_s_median": round(float(np.median(toks))) if toks else None,
         "mfu_median_pct": round(100 * float(np.median(mfus)), 1) if mfus else None,
     }
-    return {"summary": summary, "t": t, "dt": dt, "util": util, "um": um, "power": power, "sm": sm,
+    return {"summary": summary, "t": t, "dt": dt, "util": util, "um": um, "power": power, "sm": sm, "ctr": ctr,
             "steps": steps, "acts": acts, "stretches": low_stretches(t, dt, um, steps, acts)}
 
 
@@ -170,11 +177,15 @@ def plot(r: dict, path: Path) -> None:
                          "axes.labelcolor": INK2, "xtick.color": MUTED, "ytick.color": MUTED,
                          "axes.titlecolor": INK, "axes.titlesize": 10, "axes.titleweight": "bold",
                          "axes.titlelocation": "left", "figure.facecolor": SURFACE, "axes.facecolor": SURFACE})
-    fig = plt.figure(figsize=(11, 9))
-    gs = fig.add_gridspec(4, 2, width_ratios=[60, 1], height_ratios=[1.5, 1, 1, 1], hspace=0.55, wspace=0.02)
+    has_ctr = bool(r["ctr"])
+    rows = 5 if has_ctr else 4
+    fig = plt.figure(figsize=(11, 11 if has_ctr else 9))
+    gs = fig.add_gridspec(rows, 2, width_ratios=[60, 1], height_ratios=[1.5] + [1] * (rows - 1), hspace=0.55,
+                          wspace=0.02)
     axes = [fig.add_subplot(gs[0, 0])]
-    axes += [fig.add_subplot(gs[k, 0], sharex=axes[0]) for k in (1, 2, 3)]
+    axes += [fig.add_subplot(gs[k, 0], sharex=axes[0]) for k in range(1, rows)]
     cax = fig.add_subplot(gs[0, 1])
+    ax_ctr = axes.pop(1) if has_ctr else None          # the activity panel sits under the heatmap
 
     # 1) utilization, GPU x time
     n_gpu = r["util"].shape[1]
@@ -188,9 +199,23 @@ def plot(r: dict, path: Path) -> None:
     cb.outline.set_visible(False)
     cb.ax.tick_params(colors=MUTED, length=0)
 
-    # 2) power, 3) SM clock: mean over GPUs with the min-max band across GPUs
-    for ax, key, title in ((axes[1], "power", "Power per GPU, W (line: mean over GPUs, band: lowest to highest GPU)"),
-                           (axes[2], "sm", "SM clock, MHz (line: mean over GPUs, band: lowest to highest GPU)")):
+    # hardware activity counters (Hopper+): one line per counter, mean over the GPUs; one axis, all in %
+    if has_ctr:
+        for key, label, color in COUNTERS:
+            if key in r["ctr"]:
+                with np.errstate(all="ignore"):
+                    y = _binned(t, np.nanmean(r["ctr"][key], axis=1), edges, np.mean)
+                ax_ctr.plot(xh, y, color=color, linewidth=1.1, solid_capstyle="round", label=label)
+        ax_ctr.set_ylim(0, 100)
+        ax_ctr.set_title("Hardware activity, % (mean over GPUs)")
+        ax_ctr.legend(loc="lower right", ncol=4, frameon=False, labelcolor=INK2, fontsize=8.5,
+                      bbox_to_anchor=(1.0, 1.0), borderaxespad=0.1, handlelength=1.4, columnspacing=1.2)
+        axes.insert(1, ax_ctr)
+
+    # power, SM clock: mean over GPUs with the min-max band across GPUs
+    ax_p, ax_c, ax_m = axes[-3], axes[-2], axes[-1]
+    for ax, key, title in ((ax_p, "power", "Power per GPU, W (line: mean over GPUs, band: lowest to highest GPU)"),
+                           (ax_c, "sm", "SM clock, MHz (line: mean over GPUs, band: lowest to highest GPU)")):
         a = r[key]
         with np.errstate(all="ignore"):
             mean = _binned(t, np.nanmean(a, axis=1), edges, np.mean)
@@ -200,7 +225,7 @@ def plot(r: dict, path: Path) -> None:
         ax.plot(xh, mean, color=SERIES, linewidth=1.1, solid_capstyle="round")
         ax.set_title(title)
 
-    # 4) MFU (or tokens/s) from the step records
+    # MFU (or tokens/s) from the step records
     st = r["steps"]
     mfu = np.array([x.get("mfu") if x.get("mfu") is not None else np.nan for x in st], dtype=float)
     ts = np.array([x["time"] for x in st], dtype=float)
@@ -210,9 +235,9 @@ def plot(r: dict, path: Path) -> None:
         y = np.array([x.get("tokens_per_sec", np.nan) for x in st], dtype=float) / 1e3
         title = "Throughput, thousand tokens/s (from the trainer; median per bin)"
     if st:
-        axes[3].plot(xh, _binned(ts, y, edges, np.median), color=SERIES, linewidth=1.1, solid_capstyle="round")
-    axes[3].set_title(title)
-    axes[3].set_xlabel("hours since the first sample")
+        ax_m.plot(xh, _binned(ts, y, edges, np.median), color=SERIES, linewidth=1.1, solid_capstyle="round")
+    ax_m.set_title(title)
+    ax_m.set_xlabel("hours since the first sample")
 
     # what the trainer was doing: neutral hairlines, restarts in the status colour (with a legend label)
     styles = {"checkpoint save": (AXIS, 0.7), "eval": (INK2, 0.7), "restart": (CRITICAL, 1.2)}
@@ -245,7 +270,9 @@ def plot(r: dict, path: Path) -> None:
 
 COLUMNS = [("run", "run"), ("hours", "hours"), ("gpus", "GPUs"), ("util_mean", "util mean %"),
            ("util_p5", "util p5 %"), ("low_util_min", f"min < {LOW_UTIL:.0f}% util"),
-           ("slowest_gpu_util", "slowest GPU util %"), ("power_w_mean", "power W"),
+           ("slowest_gpu_util", "slowest GPU util %"), ("sm_active_mean", "SM active %"),
+           ("tensor_active_mean", "tensor active %"), ("dram_active_mean", "DRAM active %"),
+           ("sm_occupancy_mean", "SM occupancy %"), ("power_w_mean", "power W"),
            ("sm_mhz_median", "SM MHz median"), ("sm_mhz_p5", "SM MHz p5"), ("power_capped_pct", "power-capped %"),
            ("thermal_pct", "thermal %"), ("mem_gb_peak", "mem peak GB"), ("temp_c_peak", "temp peak °C"),
            ("tok_s_median", "tok/s median"), ("mfu_median_pct", "MFU median %")]

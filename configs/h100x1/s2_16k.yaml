@@ -5,6 +5,7 @@ data:
   packed_dir: /data/llm/packed
 train:
   micro_batch_size: 1
+  compile_ops: true           # fused elementwise kernels (self-checked; --set train.compile_ops=false)
 eval:
   micro_batch_size: 1
 log:

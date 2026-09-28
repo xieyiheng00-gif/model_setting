@@ -11,7 +11,8 @@ the worker's own code):
   2 config / data error       -> stop (fix the config)
   4 diverged (rollbacks used) -> stop (needs a human: lower LR, enable qk_norm, inspect crash_reports/)
   6 user stop                 -> stop
-  3 CUDA OOM                  -> restart with train.micro_batch_size halved (grad-accum doubles, same global batch)
+  3 CUDA OOM                  -> restart with train.micro_batch_size halved (grad-accum doubles, same global batch);
+                                 at micro-batch 1, once more with train.activation_checkpointing=true
   5 preempted (SIGTERM)       -> restart immediately
   1 / killed / hung           -> restart with exponential backoff
 Hang detection: if <run_dir>/heartbeat.json is older than --heartbeat_timeout the process tree is killed
@@ -114,12 +115,13 @@ class Supervisor:
         load_secrets(verbose=True)          # restarted children inherit the keys (env only, never argv)
         signal.signal(signal.SIGINT, self._on_signal)
         signal.signal(signal.SIGTERM, self._on_signal)
-        micro = None
+        micro, force_ac = None, False
         restarts, fails_no_progress, last_fail_step = 0, 0, None
         while True:
             for f in list(self.run_dir.glob("exit_status_rank*.json")) + [self.run_dir / "heartbeat.json"]:
                 f.unlink(missing_ok=True)
-            full = cmd + (["--set", f"train.micro_batch_size={micro}"] if micro else [])
+            full = (cmd + (["--set", f"train.micro_batch_size={micro}"] if micro else [])
+                    + (["--set", "train.activation_checkpointing=true"] if force_ac else []))
             self.log("launch", attempt=restarts, cmd=" ".join(full))
             kw = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
             t_start = time.time()
@@ -160,11 +162,15 @@ class Supervisor:
                 return code
             if code == 3:
                 cur = int(st.get("micro_batch_size") or micro or 0)
-                if cur <= 1:
-                    self.log("give_up", reason="OOM at micro_batch_size=1")
+                if cur > 1:
+                    micro = max(1, cur // 2)
+                    self.log("oom_retry", new_micro_batch_size=micro)
+                elif not force_ac:              # e.g. 16K without recompute (activation_checkpointing: auto)
+                    force_ac = True
+                    self.log("oom_retry", activation_checkpointing=True)
+                else:
+                    self.log("give_up", reason="OOM at micro_batch_size=1 with activation checkpointing")
                     return code
-                micro = max(1, cur // 2)
-                self.log("oom_retry", new_micro_batch_size=micro)
                 delay = 5
             elif code == 5:
                 delay = 5

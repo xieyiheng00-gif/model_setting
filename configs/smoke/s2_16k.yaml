@@ -5,6 +5,7 @@ data:
 train:
   micro_batch_size: 1
   max_steps: 60
+  activation_checkpointing: true   # smoke mode must fit an RTX 3060 at 16K
 schedule:
   decay_start: 40
 diag:
