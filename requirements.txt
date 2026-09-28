@@ -15,6 +15,7 @@ pytest>=7.4
 # H100 / Linux only (auto-detected; KDA kernels are numerically self-checked at start-up). Needed for real-run
 # speed, see README "GPU kernels":
 #   pip install flash-linear-attention   # fla: KDA Triton kernels (varlen)
-#   MAX_JOBS=10 pip install flash-attn --no-build-isolation   # document-masked full attention (may build from source)
+#   flash-attn (document-masked full attention): a pinned prebuilt wheel for this torch/CUDA/Python, see README
+#   "GPU kernels"; or build it: MAX_JOBS=10 pip install flash-attn --no-build-isolation  (~25 min)
 # The data reader imports data_prep.loader from the llm_training repo (../llm_training, or set
 # data.data_prep_root / $LMARCH_DATA_PREP).
